@@ -1,0 +1,11 @@
+{
+  "id": "afrofuturism",
+  "title": "Afrofuturism",
+  "type": "curiosity",
+  "subtype": "map",
+  "threads": ["questions"],
+  "visible_on_landing": true,
+  "x": 74,
+  "y": 55,
+  "is_hub": true
+}

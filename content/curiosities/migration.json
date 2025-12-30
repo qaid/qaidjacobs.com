@@ -1,0 +1,17 @@
+{
+  "id": "migration",
+  "title": "What does it mean to be a migrant?",
+  "central": "migration",
+  "connected": [
+    { "label": "The Great Migration", "linksTo": null },
+    { "label": "Exodusters", "linksTo": null },
+    { "label": "Black Movement", "linksTo": null },
+    { "label": "Dust Settles North", "linksTo": null },
+    { "label": "Black Alliance for Just Immigration", "linksTo": null },
+    { "label": "A Map to the Door of No Return", "linksTo": null },
+    { "label": "The Warmth of Other Suns", "linksTo": null },
+    { "label": "A Movement in Every Direction", "linksTo": null }
+  ],
+  "threads": ["questions", "movement"],
+  "visible_on_landing": true
+}

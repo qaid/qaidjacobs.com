@@ -1,0 +1,19 @@
+{
+  "name": "qaidjacobs.com",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate-manifest": "node scripts/generate-manifest.js",
+    "predev": "npm run generate-manifest",
+    "dev": "bunx serve . --listen 3000",
+    "build": "npm run generate-manifest",
+    "lint": "echo \"No lint step yet\""
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "dependencies": {
+    "marked": "^17.0.1"
+  }
+}

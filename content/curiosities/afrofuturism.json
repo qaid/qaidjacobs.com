@@ -1,0 +1,14 @@
+{
+  "id": "afrofuturism",
+  "title": "How is afrofuturism showing up in my life?",
+  "central": "afrofuturism",
+  "connected": [
+    { "label": "Sun Ra", "linksTo": null },
+    { "label": "Octavia Butler", "linksTo": null },
+    { "label": "The Great Migration", "linksTo": null },
+    { "label": "Janelle Monáe", "linksTo": null },
+    { "label": "Dark Matter", "linksTo": null }
+  ],
+  "threads": ["questions"],
+  "visible_on_landing": true
+}

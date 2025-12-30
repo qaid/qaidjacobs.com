@@ -1,0 +1,92 @@
+:root {
+  /* Color system - Light mode (default) */
+  --bg: #f5f3ed;
+  --fg: #1a1a1a;
+  --muted: #6b7280;
+  --thread-music: #d946a6;
+  --thread-movement: #14b8a6;
+  --thread-questions: #f59e0b;
+  --thread-curiosity: #3b82f6;
+  --paper: rgba(0, 0, 0, 0.04);
+  --border: 1px solid rgba(0, 0, 0, 0.08);
+  --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.15);
+  
+  /* Background gradients */
+  --bg-gradient-1: rgba(217, 70, 166, 0.06);
+  --bg-gradient-2: rgba(20, 184, 166, 0.06);
+  --bg-gradient-3: rgba(245, 158, 11, 0.06);
+  --bg-base: rgba(245, 243, 237, 0.95);
+
+  /* Typography */
+  --font-body: "Fira Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", "Menlo", monospace;
+  --size-base: 16px;
+  --size-sm: 0.875rem;
+  --size-md: 1rem;
+  --size-lg: 1.125rem;
+  --size-xl: 1.5rem;
+  --size-2xl: 2rem;
+
+  /* Spacing */
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Layout */
+  --content-max: 1200px;
+  --nav-height: 64px;
+  --radius: 16px;
+  --transition: 180ms ease;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Color system - Dark mode */
+    --bg: #0b0c0d;
+    --fg: #f2f2f0;
+    --muted: #9ca3af;
+    --thread-music: #ff7a9e;
+    --thread-movement: #4fd1c5;
+    --thread-questions: #f6c56c;
+    --thread-curiosity: #60a5fa;
+    --paper: rgba(255, 255, 255, 0.04);
+    --border: 1px solid rgba(255, 255, 255, 0.08);
+    --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.35);
+    
+    /* Background gradients */
+    --bg-gradient-1: rgba(255, 122, 158, 0.08);
+    --bg-gradient-2: rgba(79, 209, 197, 0.08);
+    --bg-gradient-3: rgba(246, 197, 108, 0.08);
+    --bg-base: rgba(12, 13, 14, 0.9);
+  }
+}
+
+[data-theme="dark"] {
+  /* Color system - Dark mode */
+  --bg: #0b0c0d;
+  --fg: #f2f2f0;
+  --muted: #9ca3af;
+  --thread-music: #ff7a9e;
+  --thread-movement: #4fd1c5;
+  --thread-questions: #f6c56c;
+  --thread-curiosity: #60a5fa;
+  --paper: rgba(255, 255, 255, 0.04);
+  --border: 1px solid rgba(255, 255, 255, 0.08);
+  --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.35);
+  
+  /* Background gradients */
+  --bg-gradient-1: rgba(255, 122, 158, 0.08);
+  --bg-gradient-2: rgba(79, 209, 197, 0.08);
+  --bg-gradient-3: rgba(246, 197, 108, 0.08);
+  --bg-base: rgba(12, 13, 14, 0.9);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --size-xl: 1.25rem;
+    --size-2xl: 1.75rem;
+    --nav-height: 56px;
+  }
+}

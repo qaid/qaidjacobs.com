@@ -1,0 +1,11 @@
+{
+  "id": "migration-essay",
+  "title": "Motion and Memory",
+  "type": "essay",
+  "subtype": "essay",
+  "description": "Reflections on movement, roots, and the Great Migration",
+  "threads": ["questions", "movement"],
+  "essayFile": "migration-essay.md",
+  "created": "2024-12-20",
+  "visible_on_landing": true
+}

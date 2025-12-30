@@ -1,0 +1,10 @@
+{
+  "id": "beat-sketch",
+  "title": "Beat",
+  "type": "music",
+  "subtype": "sketch",
+  "threads": ["music", "movement"],
+  "visible_on_landing": true,
+  "x": 18,
+  "y": 62
+}

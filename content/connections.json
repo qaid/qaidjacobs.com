@@ -1,0 +1,8 @@
+[
+  { "from": "mix-2019", "to": "movement-study", "threads": ["music", "movement"] },
+  { "from": "movement-study", "to": "afrofuturism", "threads": ["questions", "movement"] },
+  { "from": "beat-sketch", "to": "mix-2019", "threads": ["music"] },
+  { "from": "durational", "to": "movement-study", "threads": ["movement"] },
+  { "from": "migration-essay", "to": "afrofuturism", "threads": ["questions"] },
+  { "from": "essay", "to": "migration-essay", "threads": ["questions", "movement"] }
+]

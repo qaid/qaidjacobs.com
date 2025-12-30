@@ -1,0 +1,10 @@
+{
+  "id": "movement-study",
+  "title": "Movement",
+  "type": "movement",
+  "subtype": "study",
+  "threads": ["movement"],
+  "visible_on_landing": true,
+  "x": 38,
+  "y": 54
+}

@@ -1,0 +1,95 @@
+[
+  {
+    "id": "afrofuturism",
+    "title": "Afrofuturism",
+    "type": "curiosity",
+    "subtype": "map",
+    "threads": [
+      "questions"
+    ],
+    "visible_on_landing": true,
+    "x": 74,
+    "y": 55,
+    "is_hub": true
+  },
+  {
+    "id": "beat-sketch",
+    "title": "Beat",
+    "type": "music",
+    "subtype": "sketch",
+    "threads": [
+      "music",
+      "movement"
+    ],
+    "visible_on_landing": true,
+    "x": 18,
+    "y": 62
+  },
+  {
+    "id": "durational",
+    "title": "Durational",
+    "type": "movement",
+    "subtype": "piece",
+    "threads": [
+      "movement"
+    ],
+    "visible_on_landing": true,
+    "x": 52,
+    "y": 72
+  },
+  {
+    "id": "migration-essay",
+    "title": "Motion and Memory",
+    "type": "essay",
+    "subtype": "essay",
+    "description": "Reflections on movement, roots, and the Great Migration",
+    "threads": [
+      "questions",
+      "movement"
+    ],
+    "essayFile": "migration-essay.md",
+    "created": "2024-12-20",
+    "visible_on_landing": true,
+    "x": 63,
+    "y": 72
+  },
+  {
+    "id": "mix-2019",
+    "title": "Summer 2019",
+    "type": "music",
+    "subtype": "mix",
+    "threads": [
+      "music"
+    ],
+    "visible_on_landing": true,
+    "x": 22,
+    "y": 28
+  },
+  {
+    "id": "movement-study",
+    "title": "Movement",
+    "type": "movement",
+    "subtype": "study",
+    "threads": [
+      "movement"
+    ],
+    "visible_on_landing": true,
+    "x": 38,
+    "y": 54
+  },
+  {
+    "id": "sunday-morning-church-with-doc",
+    "title": "Sunday morning church with Doc",
+    "type": "essay",
+    "subtype": "essay",
+    "description": "Some ruminations on a Sunday morning ride.",
+    "threads": [
+      "questions"
+    ],
+    "essayFile": "sunday-morning-church-with-doc.md",
+    "created": "2016-01-25",
+    "visible_on_landing": true,
+    "x": 45,
+    "y": 60
+  }
+]
