@@ -3,11 +3,11 @@
   "title": "How is afrofuturism showing up in my life?",
   "central": "afrofuturism",
   "connected": [
-    { "label": "Sun Ra", "linksTo": null },
+    { "label": "Futureland", "linksTo": null },
     { "label": "Octavia Butler", "linksTo": null },
     { "label": "The Great Migration", "linksTo": null },
-    { "label": "Janelle Monáe", "linksTo": null },
-    { "label": "Dark Matter", "linksTo": null }
+    { "label": "Ibn al-Shatir", "linksTo": "https://phys.org/news/2025-04-copernicus-ancient-muslim-astronomer-cosmological.html" },
+    { "label": "Dark Matter", "linksTo": "https://en.wikipedia.org/wiki/Dark_Matter_(prose_anthologies)" }
   ],
   "threads": ["questions"],
   "visible_on_landing": true

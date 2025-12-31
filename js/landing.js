@@ -1,789 +1,910 @@
-import { closeEssay, focusEssay } from './main.js';
-import { marked } from '../node_modules/marked/lib/marked.esm.js';
+import {
+  closeEssay,
+  focusEssay
+} from "./main.js";
+import {
+  DOT_RADIUS,
+  DOT_SIZE,
+  THREAD_PALETTES,
+  clearContainerContent,
+  get,
+  getRendererForNode,
+  loadJSON,
+  registerRenderer,
+  set,
+  setContainerType,
+  updateContainerHeader
+} from "./curiosity-4vn8p1s8.js";
+import {
+  createElement,
+  getById,
+  query
+} from "./main-65mq6067.js";
+import {
+  __require,
+  __toESM
+} from "./main-3hqyeswk.js";
 
-const phraseEl = document.getElementById('landing-phrase');
-const phraseTextEl = document.querySelector('.phrase-text');
-const phraseByEl = document.getElementById('phrase-by');
-const webEl = document.getElementById('landing-web');
-
-let phrases = [];
-let nodes = [];
-let threads = [];
-const DOT_SIZE = 14;
-const DOT_RADIUS = DOT_SIZE / 2;
-const threadPalettes = {
-  music: ['#ff7a9e', '#ff9cc0', '#ffd3e1'],
-  movement: ['#4fd1c5', '#7de8dd', '#b1fff4'],
-  questions: ['#f6c56c', '#ffd28c', '#ffe7b8'],
-};
-
-const curiosityCentralById = new Map();
-
-const activeParticleStreams = new Map();
-
-let dotElementsById = new Map();
-let lastNodesPx = [];
-let isContainerMode = false;
-let activeNodeId = null;
-let pendingNodeId = null;
-let isNodeSwitching = false;
-
-const overlayEl = document.getElementById('overlay-essay');
-const cardEl = overlayEl ? overlayEl.querySelector('.container-card') : null;
-const closeBtnEl = overlayEl ? overlayEl.querySelector('.container-close') : null;
-let isAnimatingContainer = false;
-let refreshCuriosityLines = null;
-
-function hidePhrase() {
-  document.body.classList.add('phrase-hidden');
-  document.body.classList.remove('phrase-fade-in');
+// src/components/phrase.ts
+var phraseTextEl = null;
+var phraseByEl = null;
+var currentPhraseText = "";
+var currentPhraseBy = "";
+function initPhrase() {
+  phraseTextEl = document.querySelector(".phrase-text");
+  phraseByEl = getById("phrase-by");
 }
-
+function hidePhrase() {
+  document.body.classList.add("phrase-hidden");
+  document.body.classList.remove("phrase-fade-in");
+}
 function showPhraseSlow() {
-  document.body.classList.add('phrase-fade-in');
-  document.body.classList.remove('phrase-hidden');
+  document.body.classList.add("phrase-fade-in");
+  document.body.classList.remove("phrase-hidden");
   window.setTimeout(() => {
-    document.body.classList.remove('phrase-fade-in');
+    document.body.classList.remove("phrase-fade-in");
   }, 1100);
 }
-
-async function loadJSON(path) {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error(`Failed to load ${path}`);
-  return res.json();
-}
-
-function hashStringToInt(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i += 1) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return Math.abs(h);
-}
-
-function clearDynamicContainerContent() {
-  if (!cardEl) return;
-  const curiosityStage = cardEl.querySelector('.curiosity-stage');
-  if (curiosityStage) curiosityStage.remove();
-
-  const essayContent = cardEl.querySelector('.essay-content');
-  if (essayContent) essayContent.remove();
-
-  refreshCuriosityLines = null;
-}
-
-async function renderEssay(nodeId) {
-  if (!cardEl) return;
-  clearDynamicContainerContent();
-
-  let nodeData;
-  try {
-    nodeData = await loadJSON(`content/nodes/${nodeId}.json`);
-  } catch (e) {
-    console.error('Failed to load node data:', e);
+function rotatePhrase(phrases) {
+  if (!phrases.length || !phraseTextEl)
     return;
-  }
-
-  if (!nodeData.essayFile) {
-    console.error('No essayFile specified in node data');
-    return;
-  }
-
-  let markdownText;
-  try {
-    const res = await fetch(`content/essays/${nodeData.essayFile}`);
-    if (!res.ok) throw new Error(`Failed to load essay: ${res.status}`);
-    markdownText = await res.text();
-  } catch (e) {
-    console.error('Failed to load essay markdown:', e);
-    return;
-  }
-
-  const htmlContent = marked.parse(markdownText);
-
-  const article = document.createElement('article');
-  article.className = 'essay-content';
-  article.innerHTML = htmlContent;
-
-  const titleEl = cardEl.querySelector('h2');
-  if (titleEl) titleEl.style.display = 'none';
-
-  const eyebrow = cardEl.querySelector('.eyebrow');
-  if (eyebrow) eyebrow.textContent = '';
-
-  const lede = cardEl.querySelector('.lede');
-  if (lede) lede.textContent = '';
-
-  cardEl.appendChild(article);
-}
-
-async function renderCuriosity(nodeId) {
-  if (!cardEl) return;
-  clearDynamicContainerContent();
-
-  let data;
-  try {
-    data = await loadJSON(`content/curiosities/${nodeId}.json`);
-  } catch (e) {
-    return;
-  }
-
-  const stage = document.createElement('div');
-  stage.className = 'curiosity-stage';
-
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'curiosity-lines');
-  svg.setAttribute('viewBox', '0 0 1000 1000');
-  svg.setAttribute('preserveAspectRatio', 'none');
-
-  const cx = 500;
-  const cy = 500;
-
-  const center = document.createElement('div');
-  center.className = 'curiosity-center';
-  const centerPill = document.createElement('div');
-  centerPill.className = 'curiosity-center-pill';
-  centerPill.textContent = data.central || nodeId;
-  center.appendChild(centerPill);
-
-  stage.appendChild(svg);
-  stage.appendChild(center);
-
-  const connected = Array.isArray(data.connected) ? data.connected.slice(0, 30) : [];
-  const count = connected.length;
-
-  const palettes = ['music', 'movement', 'questions'];
-  const radius = count <= 8 ? 310 : 360;
-
-  const placed = [];
-
-  connected.forEach((item, idx) => {
-    const baseAngle = (idx / Math.max(1, count)) * Math.PI * 2;
-    const jitter = ((hashStringToInt(item.label || String(idx)) % 1000) / 1000 - 0.5) * 0.42;
-    const angle = baseAngle + jitter;
-
-    const rJitter = ((hashStringToInt(`${item.label}-r`) % 1000) / 1000 - 0.5) * 60;
-    const r = radius + rJitter;
-
-    const x = cx + Math.cos(angle) * r;
-    const y = cy + Math.sin(angle) * r;
-
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'curiosity-item';
-    btn.disabled = true;
-
-    const paletteKey = palettes[hashStringToInt(item.label || String(idx)) % palettes.length];
-    const palette = threadPalettes[paletteKey] || threadPalettes.questions;
-    btn.style.color = palette[0];
-
-    const label = document.createElement('span');
-    label.className = 'curiosity-label';
-    label.textContent = item.label || '';
-
-    btn.style.left = `${(x / 1000) * 100}%`;
-    btn.style.top = `${(y / 1000) * 100}%`;
-
-    const jx = ((hashStringToInt(`${item.label}-jx`) % 7) - 3);
-    const jy = ((hashStringToInt(`${item.label}-jy`) % 7) - 3);
-    btn.style.setProperty('--jx', `${jx}px`);
-    btn.style.setProperty('--jy', `${jy}px`);
-
-    btn.appendChild(label);
-    stage.appendChild(btn);
-
-    placed.push({ el: btn, cx: x, cy: y });
-  });
-
-  const titleEl = cardEl.querySelector('h2');
-  if (titleEl) titleEl.textContent = data.title || nodeId;
-
-  function endpointToRectEdge(fromX, fromY, toX, toY, halfW, halfH) {
-    const vx = toX - fromX;
-    const vy = toY - fromY;
-    const denom = Math.max(1e-6, Math.max(Math.abs(vx) / Math.max(1e-6, halfW), Math.abs(vy) / Math.max(1e-6, halfH)));
-    return {
-      x: toX - vx / denom,
-      y: toY - vy / denom,
-    };
-  }
-
-  function recomputeLines() {
-    const stageRect = stage.getBoundingClientRect();
-    if (stageRect.width <= 0 || stageRect.height <= 0) return;
-
-    while (svg.lastChild) svg.removeChild(svg.lastChild);
-
-    const centerRect = centerPill.getBoundingClientRect();
-    const cW = (centerRect.width / stageRect.width) * 1000;
-    const cH = (centerRect.height / stageRect.height) * 1000;
-    const cHalfW = cW / 2;
-    const cHalfH = cH / 2;
-
-    placed.forEach(({ el, cx: itemCx, cy: itemCy }) => {
-      const r = el.getBoundingClientRect();
-      const wVb = (r.width / stageRect.width) * 1000;
-      const hVb = (r.height / stageRect.height) * 1000;
-      const halfW = wVb / 2;
-      const halfH = hVb / 2;
-
-      const start = endpointToRectEdge(itemCx, itemCy, cx, cy, cHalfW, cHalfH);
-      const end = endpointToRectEdge(cx, cy, itemCx, itemCy, halfW, halfH);
-
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', String(start.x));
-      line.setAttribute('y1', String(start.y));
-      line.setAttribute('x2', String(end.x));
-      line.setAttribute('y2', String(end.y));
-      line.setAttribute('stroke-width', '2');
-      svg.appendChild(line);
-    });
-  }
-
-  refreshCuriosityLines = () => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        recomputeLines();
-      });
-    });
-  };
-
-  refreshCuriosityLines();
-
-  const lede = cardEl.querySelector('.lede');
-  if (lede) lede.textContent = '';
-  cardEl.appendChild(stage);
-}
-
-function rotatePhrase() {
-  if (!phrases.length || !phraseTextEl) return;
   const next = phrases[Math.floor(Math.random() * phrases.length)];
-  phraseTextEl.textContent = next.text || '';
+  currentPhraseText = next.text || "";
+  currentPhraseBy = next.by ? `— ${next.by}` : "";
+  phraseTextEl.textContent = currentPhraseText;
   if (phraseByEl) {
-    phraseByEl.textContent = next.by ? `— ${next.by}` : '';
+    phraseByEl.textContent = currentPhraseBy;
+  }
+}
+function showCustomPhrase(text, attribution) {
+  if (!phraseTextEl)
+    return;
+  phraseTextEl.textContent = text;
+  if (phraseByEl) {
+    phraseByEl.textContent = attribution ? `— ${attribution}` : "";
+  }
+}
+function restorePhrase() {
+  if (!phraseTextEl)
+    return;
+  phraseTextEl.textContent = currentPhraseText;
+  if (phraseByEl) {
+    phraseByEl.textContent = currentPhraseBy;
   }
 }
 
-function createParticleStream(fromNode, toNode, threadColor, threadElement, streamId) {
-  const particles = [];
-  const particleCount = 25;
-  const streamDuration = 2400;
-  const baseDelay = streamDuration / particleCount;
-
-  function spawnParticle(index, isLoop = false) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.style.background = threadColor;
-    particle.style.boxShadow = `0 0 4px ${threadColor}, 0 0 2px ${threadColor}`;
-    
-    particle.style.left = `${fromNode.center.x}px`;
-    particle.style.top = `${fromNode.center.y}px`;
-    
-    webEl.appendChild(particle);
-    particles.push(particle);
-
-    const randomDelay = isLoop ? baseDelay * index * (0.8 + Math.random() * 0.4) : baseDelay * index * (0.8 + Math.random() * 0.4);
-    const randomDuration = streamDuration * (0.9 + Math.random() * 0.2);
-    
-    const timeoutId = setTimeout(() => {
-      particle.style.animation = `particleFlow ${randomDuration}ms ease-in-out`;
-      particle.style.opacity = '1';
-      
-      const startX = fromNode.center.x;
-      const startY = fromNode.center.y;
-      const endX = toNode.center.x;
-      const endY = toNode.center.y;
-      
-      const dx = endX - startX;
-      const dy = endY - startY;
-      const distance = Math.hypot(dx, dy);
-      const perpX = -dy / distance;
-      const perpY = dx / distance;
-      
-      const waveAmplitude = 3 + Math.random() * 4;
-      const waveFrequency = 2 + Math.random() * 2;
-      const randomOffset = (Math.random() - 0.5) * 2;
-      
-      let startTime = null;
-      let animationId;
-      
-      function animate(timestamp) {
-        if (!activeParticleStreams.has(streamId)) {
-          particle.remove();
-          return;
-        }
-        
-        if (!startTime) startTime = timestamp;
-        const elapsed = timestamp - startTime;
-        const progress = Math.min(elapsed / randomDuration, 1);
-        
-        const easeProgress = progress < 0.5 
-          ? 2 * progress * progress 
-          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-        
-        const wave = Math.sin(easeProgress * Math.PI * waveFrequency) * waveAmplitude * (1 - easeProgress);
-        
-        const currentX = startX + dx * easeProgress + perpX * (wave + randomOffset);
-        const currentY = startY + dy * easeProgress + perpY * (wave + randomOffset);
-        
-        particle.style.left = `${currentX}px`;
-        particle.style.top = `${currentY}px`;
-        
-        if (progress < 1) {
-          animationId = requestAnimationFrame(animate);
-        } else {
-          particle.remove();
-          if (activeParticleStreams.has(streamId)) {
-            spawnParticle(index, true);
-          }
-        }
-      }
-      animationId = requestAnimationFrame(animate);
-    }, randomDelay);
+// src/components/web.ts
+var threadElements = [];
+var dotElements = new Map;
+var currentNodesPx = [];
+function nodesToPx(nodes, container) {
+  const rect = container.getBoundingClientRect();
+  return nodes.map((n) => ({
+    ...n,
+    center: {
+      x: n.x / 100 * rect.width,
+      y: n.y / 100 * rect.height
+    }
+  }));
+}
+function createThreadLine(from, to, thread, index) {
+  const line = createElement("div", { className: "thread" });
+  const primaryThread = thread.threads?.[0] || "questions";
+  const palette = THREAD_PALETTES[primaryThread] || THREAD_PALETTES.questions;
+  line.dataset.thread = primaryThread;
+  line.dataset.from = thread.from;
+  line.dataset.to = thread.to;
+  line.style.setProperty("--i", String(index));
+  line.style.setProperty("--strand1", palette[0]);
+  line.style.setProperty("--strand2", palette[1]);
+  line.style.setProperty("--strand3", palette[2]);
+  const x1 = from.center.x;
+  const y1 = from.center.y;
+  const x2 = to.center.x;
+  const y2 = to.center.y;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dist = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+  line.style.width = `${dist}px`;
+  line.style.left = `${x1}px`;
+  line.style.top = `${y1}px`;
+  line.style.transformOrigin = "0 0";
+  line.style.transform = `rotate(${angle}deg)`;
+  return line;
+}
+function createNodeDot(node, index, callbacks) {
+  const dot = createElement("div", {
+    className: "node-dot floating",
+    "data-type": node.type,
+    "data-id": node.id
+  });
+  dot.style.setProperty("--i", String(index));
+  dot.style.left = `${node.center.x - DOT_RADIUS}px`;
+  dot.style.top = `${node.center.y - DOT_RADIUS}px`;
+  dot.dataset.origLeft = dot.style.left;
+  dot.dataset.origTop = dot.style.top;
+  dot.title = node.title || node.id;
+  dot.addEventListener("click", () => {
+    callbacks.onClick(node);
+  });
+  dot.addEventListener("mouseenter", () => {
+    callbacks.onHoverEnter(node);
+  });
+  dot.addEventListener("mouseleave", () => {
+    callbacks.onHoverLeave(node);
+  });
+  return dot;
+}
+function renderWeb(container, callbacks) {
+  if (!container)
+    return;
+  const nodes = get("nodes");
+  const threads = get("threads");
+  container.innerHTML = "";
+  threadElements = [];
+  dotElements = new Map;
+  const nodesPx = nodesToPx(nodes, container);
+  currentNodesPx = nodesPx;
+  threads.forEach((thread, idx) => {
+    const from = nodesPx.find((n) => n.id === thread.from);
+    const to = nodesPx.find((n) => n.id === thread.to);
+    if (!from || !to)
+      return;
+    const line = createThreadLine(from, to, thread, idx);
+    container.appendChild(line);
+    threadElements.push(line);
+  });
+  nodesPx.forEach((node, idx) => {
+    const dot = createNodeDot(node, idx, callbacks);
+    container.appendChild(dot);
+    dotElements.set(node.id, dot);
+  });
+  const isContainerMode = get("isContainerMode");
+  const activeNodeId = get("activeNodeId");
+  if (isContainerMode && activeNodeId) {}
+}
+function getThreadElements() {
+  return threadElements;
+}
+function getDotElements() {
+  return dotElements;
+}
+function getCurrentNodesPx() {
+  return currentNodesPx;
+}
+function setDotContainerMode(dot, mode) {
+  dot.classList.remove("container-nav", "container-active", "container-hidden");
+  switch (mode) {
+    case "nav":
+      dot.classList.add("container-nav");
+      break;
+    case "active":
+      dot.classList.add("container-active");
+      break;
+    case "active-hidden":
+      dot.classList.add("container-active", "container-hidden");
+      break;
+    case "hidden":
+      dot.classList.add("container-hidden");
+      break;
   }
+}
+function resetDotPositions() {
+  dotElements.forEach((dot) => {
+    dot.classList.remove("container-nav", "container-active", "container-hidden");
+    dot.style.zIndex = "";
+    const origLeft = dot.dataset.origLeft;
+    const origTop = dot.dataset.origTop;
+    if (origLeft != null)
+      dot.style.left = origLeft;
+    if (origTop != null)
+      dot.style.top = origTop;
+  });
+}
 
-  for (let i = 0; i < particleCount; i++) {
+// src/utils/animation.ts
+function easeInOutQuad(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+// src/components/particles.ts
+var PARTICLE_COUNT = 25;
+var STREAM_DURATION = 2400;
+var activeStreams = new Map;
+var streamParticles = new Map;
+function createParticle(container, sourceNode, targetNode, color, streamId, index, onComplete) {
+  const particle = createElement("div", { className: "particle" });
+  particle.style.background = color;
+  particle.style.boxShadow = `0 0 4px ${color}, 0 0 2px ${color}`;
+  particle.style.left = `${sourceNode.center.x}px`;
+  particle.style.top = `${sourceNode.center.y}px`;
+  container.appendChild(particle);
+  const baseDelay = STREAM_DURATION / PARTICLE_COUNT;
+  const randomDelay = baseDelay * index * (0.8 + Math.random() * 0.4);
+  const randomDuration = STREAM_DURATION * (0.9 + Math.random() * 0.2);
+  setTimeout(() => {
+    if (!activeStreams.has(streamId)) {
+      particle.remove();
+      return;
+    }
+    particle.style.opacity = "1";
+    const startX = sourceNode.center.x;
+    const startY = sourceNode.center.y;
+    const endX = targetNode.center.x;
+    const endY = targetNode.center.y;
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const distance = Math.hypot(dx, dy);
+    const perpX = -dy / distance;
+    const perpY = dx / distance;
+    const waveAmplitude = 3 + Math.random() * 4;
+    const waveFrequency = 2 + Math.random() * 2;
+    const randomOffset = (Math.random() - 0.5) * 2;
+    let startTime = null;
+    function animate(timestamp) {
+      if (!activeStreams.has(streamId)) {
+        particle.remove();
+        return;
+      }
+      if (!startTime)
+        startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / randomDuration, 1);
+      const easeProgress = easeInOutQuad(progress);
+      const wave = Math.sin(easeProgress * Math.PI * waveFrequency) * waveAmplitude * (1 - easeProgress);
+      const currentX = startX + dx * easeProgress + perpX * (wave + randomOffset);
+      const currentY = startY + dy * easeProgress + perpY * (wave + randomOffset);
+      particle.style.left = `${currentX}px`;
+      particle.style.top = `${currentY}px`;
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        particle.remove();
+        onComplete();
+      }
+    }
+    requestAnimationFrame(animate);
+  }, randomDelay);
+  return particle;
+}
+function createParticleStream(container, sourceNode, targetNode, color, streamId) {
+  const particles = [];
+  function spawnParticle(index) {
+    if (!activeStreams.has(streamId))
+      return;
+    const particle = createParticle(container, sourceNode, targetNode, color, streamId, index, () => {
+      if (activeStreams.has(streamId)) {
+        spawnParticle(index);
+      }
+    });
+    particles.push(particle);
+  }
+  for (let i = 0;i < PARTICLE_COUNT; i++) {
     spawnParticle(i);
   }
-
   return particles;
 }
-
-function startParticleStreams(nodeId, nodesPx, threadElements) {
+function startParticleStreams(nodeId, nodesPx, threadElements2, container) {
   stopParticleStreams(nodeId);
-  
-  const connectedThreads = threadElements.filter(
-    thread => thread.dataset.from === nodeId || thread.dataset.to === nodeId
-  );
-  
-  const streams = [];
+  const connectedThreads = threadElements2.filter((thread) => thread.dataset.from === nodeId || thread.dataset.to === nodeId);
+  const allParticles = [];
   connectedThreads.forEach((thread, idx) => {
-    const fromNode = nodesPx.find(n => n.id === thread.dataset.from);
-    const toNode = nodesPx.find(n => n.id === thread.dataset.to);
-    if (!fromNode || !toNode) return;
-    
-    const primaryThread = thread.dataset.thread || 'questions';
-    const palette = threadPalettes[primaryThread] || threadPalettes.questions;
-    const threadColor = palette[0];
-    
+    const fromNode = nodesPx.find((n) => n.id === thread.dataset.from);
+    const toNode = nodesPx.find((n) => n.id === thread.dataset.to);
+    if (!fromNode || !toNode)
+      return;
+    const primaryThread = thread.dataset.thread || "questions";
+    const palette = THREAD_PALETTES[primaryThread] || THREAD_PALETTES.questions;
+    const color = palette[0];
     const isFromHovered = thread.dataset.from === nodeId;
     const sourceNode = isFromHovered ? fromNode : toNode;
     const targetNode = isFromHovered ? toNode : fromNode;
-    
     const streamId = `${nodeId}-${idx}`;
-    activeParticleStreams.set(streamId, true);
-    
-    const particles = createParticleStream(sourceNode, targetNode, threadColor, thread, streamId);
-    streams.push(...particles);
+    activeStreams.set(streamId, true);
+    const particles = createParticleStream(container, sourceNode, targetNode, color, streamId);
+    allParticles.push(...particles);
   });
-  
-  activeParticleStreams.set(nodeId, streams);
+  streamParticles.set(nodeId, allParticles);
 }
-
 function stopParticleStreams(nodeId) {
-  const streams = activeParticleStreams.get(nodeId);
-  if (streams) {
-    streams.forEach(particle => {
+  const particles = streamParticles.get(nodeId);
+  if (particles) {
+    particles.forEach((particle) => {
       if (particle.parentNode) {
         particle.remove();
       }
     });
+    streamParticles.delete(nodeId);
   }
-  
-  const streamKeys = Array.from(activeParticleStreams.keys());
-  streamKeys.forEach(key => {
-    if (key.startsWith(`${nodeId}-`)) {
-      activeParticleStreams.delete(key);
+  const streamKeys = Array.from(activeStreams.keys());
+  streamKeys.forEach((key) => {
+    if (key === nodeId || key.startsWith(`${nodeId}-`)) {
+      activeStreams.delete(key);
     }
   });
-  
-  activeParticleStreams.delete(nodeId);
 }
 
-function setOverlayContent(nodeId) {
-  const node = nodes.find((n) => n.id === nodeId);
-  if (!node) return;
-  if (!overlayEl) return;
-
-  const eyebrow = overlayEl.querySelector('.eyebrow');
-  const titleEl = overlayEl.querySelector('h2');
-  const ledeEl = overlayEl.querySelector('.lede');
-
-  if (eyebrow) eyebrow.textContent = node.type ? `Container: ${node.type}` : 'Container';
-  if (titleEl) titleEl.textContent = node.title || node.id;
-  if (ledeEl && node.type !== 'curiosity' && node.subtype !== 'essay' && node.type !== 'essay') {
-    ledeEl.textContent =
-      'This is a stub for the essay container. Hook nodes or nav to enter here; replace with real content and layout per spec.';
+// src/containers/essay.ts
+var markedModule = null;
+async function getMarked() {
+  if (!markedModule) {
+    markedModule = await import("./marked.esm-5snfdrkk.js");
   }
+  return markedModule.marked;
+}
+async function loadEssayMarkdown(essayFile) {
+  const res = await fetch(`content/essays/${essayFile}`);
+  if (!res.ok) {
+    throw new Error(`Failed to load essay: ${res.status} ${res.statusText}`);
+  }
+  return res.text();
+}
+var essayRenderer = {
+  async render(nodeId, cardEl) {
+    clearContainerContent(cardEl);
+    let nodeData;
+    try {
+      nodeData = await loadJSON(`content/nodes/${nodeId}.json`);
+    } catch (e) {
+      console.error("Failed to load node data:", e);
+      return;
+    }
+    if (!nodeData.essayFile) {
+      console.error("No essayFile specified in node data");
+      return;
+    }
+    let markdownText;
+    try {
+      markdownText = await loadEssayMarkdown(nodeData.essayFile);
+    } catch (e) {
+      console.error("Failed to load essay markdown:", e);
+      return;
+    }
+    const marked = await getMarked();
+    const htmlContent = marked.parse(markdownText);
+    const article = createElement("article", { className: "essay-content" });
+    article.innerHTML = htmlContent;
+    updateContainerHeader(cardEl, {
+      eyebrow: "",
+      lede: "",
+      hideTitle: true
+    });
+    cardEl.appendChild(article);
+  },
+  cleanup() {}
+};
+registerRenderer("essay", essayRenderer);
 
-  const isEssay = node.subtype === 'essay' || node.type === 'essay';
-  overlayEl.classList.toggle('is-essay', isEssay);
+// src/containers/durational.ts
+var particleStates = [];
+var animationFrameId = null;
+var containerRect = null;
+function extractYouTubeId(url) {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/);
+  return match?.[1] || "";
+}
+function extractVimeoId(url) {
+  const match = url.match(/vimeo\.com\/(\d+)/);
+  return match?.[1] || "";
+}
+function createEmbed(media) {
+  const iframe = createElement("iframe", {
+    className: "durational-embed"
+  });
+  iframe.setAttribute("allow", "autoplay");
+  iframe.setAttribute("loading", "lazy");
+  iframe.setAttribute("allowfullscreen", "");
+  switch (media.source) {
+    case "soundcloud":
+      iframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(media.url)}&color=%23c4956a&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true`;
+      break;
+    case "mixcloud":
+      iframe.src = `https://www.mixcloud.com/widget/iframe/?hide_cover=1&feed=${encodeURIComponent(media.url)}`;
+      break;
+    case "youtube":
+      const ytId = extractYouTubeId(media.url);
+      iframe.src = `https://www.youtube.com/embed/${ytId}?rel=0`;
+      break;
+    case "vimeo":
+      const vimeoId = extractVimeoId(media.url);
+      iframe.src = `https://player.vimeo.com/video/${vimeoId}`;
+      break;
+  }
+  return iframe;
+}
+function animateParticles() {
+  if (!containerRect)
+    return;
+  const nudgeChance = 0.005;
+  const nudgeStrength = 0.08;
+  const drift = 0.002;
+  const drag = 0.997;
+  const margin = 20;
+  for (const p of particleStates) {
+    if (Math.random() < nudgeChance) {
+      const angle = Math.random() * Math.PI * 2;
+      p.vx += Math.cos(angle) * nudgeStrength;
+      p.vy += Math.sin(angle) * nudgeStrength;
+    }
+    p.vx += (Math.random() - 0.5) * drift;
+    p.vy += (Math.random() - 0.5) * drift;
+    p.vx *= drag;
+    p.vy *= drag;
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < margin) {
+      p.vx += 0.01;
+    } else if (p.x > containerRect.width - margin) {
+      p.vx -= 0.01;
+    }
+    if (p.y < margin) {
+      p.vy += 0.01;
+    } else if (p.y > containerRect.height - margin) {
+      p.vy -= 0.01;
+    }
+    p.x = Math.max(0, Math.min(containerRect.width, p.x));
+    p.y = Math.max(0, Math.min(containerRect.height, p.y));
+    p.el.style.transform = `translate(${p.x}px, ${p.y}px)`;
+  }
+  animationFrameId = requestAnimationFrame(animateParticles);
+}
+function startParticles(container) {
+  const particleCount = 40;
+  particleStates = [];
+  const rect = container.getBoundingClientRect();
+  const width = Math.max(rect.width, window.innerWidth * 0.9);
+  const height = Math.max(rect.height, window.innerHeight * 0.8);
+  containerRect = { width, height };
+  const cols = 8;
+  const rows = 5;
+  const cellWidth = width / cols;
+  const cellHeight = height / rows;
+  for (let i = 0;i < particleCount; i++) {
+    const particle = createElement("div", { className: "durational-particle" });
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const jitterX = (Math.random() - 0.5) * cellWidth * 0.8;
+    const jitterY = (Math.random() - 0.5) * cellHeight * 0.8;
+    const x = (col + 0.5) * cellWidth + jitterX;
+    const y = (row + 0.5) * cellHeight + jitterY;
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.1 + Math.random() * 0.15;
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed;
+    particle.style.left = "0";
+    particle.style.top = "0";
+    particle.style.transform = `translate(${x}px, ${y}px)`;
+    const size = 3 + Math.random() * 4;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.opacity = `${0.5 + Math.random() * 0.4}`;
+    container.appendChild(particle);
+    particleStates.push({ el: particle, x, y, vx, vy });
+  }
+  animationFrameId = requestAnimationFrame(animateParticles);
+}
+function stopParticles() {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+  particleStates.forEach((p) => p.el.remove());
+  particleStates = [];
+  containerRect = null;
+}
+function formatSubtype(subtype) {
+  if (!subtype)
+    return "durational";
+  return subtype.replace("-", " ");
+}
+var durationalRenderer = {
+  async render(nodeId, cardEl) {
+    clearContainerContent(cardEl);
+    let data;
+    try {
+      data = await loadJSON(`content/durational/${nodeId}.json`);
+    } catch (e) {
+      console.error("Failed to load durational data:", e);
+      return;
+    }
+    const container = createElement("div", { className: "durational-content" });
+    const particleBg = createElement("div", { className: "durational-particles" });
+    container.appendChild(particleBg);
+    const playerWrapper = createElement("div", { className: "durational-player" });
+    playerWrapper.appendChild(createEmbed(data.media));
+    container.appendChild(playerWrapper);
+    const descriptionText = data.description || data.commentary || "";
+    if (descriptionText) {
+      const description = createElement("div", { className: "durational-description" });
+      description.textContent = descriptionText;
+      container.appendChild(description);
+    }
+    updateContainerHeader(cardEl, {
+      eyebrow: formatSubtype(data.subtype),
+      title: data.title,
+      lede: ""
+    });
+    cardEl.appendChild(container);
+    startParticles(particleBg);
+  },
+  cleanup() {
+    stopParticles();
+  }
+};
+registerRenderer("durational", durationalRenderer);
+registerRenderer("dj-mix", durationalRenderer);
+registerRenderer("talk", durationalRenderer);
+registerRenderer("podcast", durationalRenderer);
 
-  const isCuriosity = node.type === 'curiosity';
-  overlayEl.classList.toggle('is-curiosity', isCuriosity);
-
-  if (isCuriosity) {
-    if (eyebrow) eyebrow.textContent = '';
-    renderCuriosity(nodeId);
-  } else if (isEssay) {
-    renderEssay(nodeId);
+// src/landing.ts
+var webEl = getById("landing-web");
+var overlayEl = getById("overlay-essay");
+var cardEl = overlayEl ? query(".container-card", overlayEl) : null;
+var closeBtnEl = overlayEl ? query(".container-close", overlayEl) : null;
+var curiosityCentralById = new Map;
+var isAnimatingContainer = false;
+var refreshCuriosityLines = null;
+var NODE_ROUTE_PREFIX = "#/node/";
+function getNodeIdFromUrl() {
+  const hash = window.location.hash;
+  if (hash.startsWith(NODE_ROUTE_PREFIX)) {
+    return hash.slice(NODE_ROUTE_PREFIX.length);
+  }
+  return null;
+}
+function updateUrlForNode(nodeId) {
+  if (nodeId) {
+    const newUrl = `${NODE_ROUTE_PREFIX}${nodeId}`;
+    if (window.location.hash !== newUrl) {
+      history.pushState({ nodeId }, "", newUrl);
+    }
   } else {
-    clearDynamicContainerContent();
+    if (window.location.hash) {
+      history.pushState({}, "", window.location.pathname);
+    }
   }
 }
-
+function handlePopState() {
+  const nodeId = getNodeIdFromUrl();
+  const isContainerMode = get("isContainerMode");
+  const activeNodeId = get("activeNodeId");
+  if (nodeId && !isContainerMode) {
+    focusEssay(nodeId);
+  } else if (!nodeId && isContainerMode && activeNodeId) {
+    requestCloseContainer();
+  } else if (nodeId && isContainerMode && nodeId !== activeNodeId) {
+    set("pendingNodeId", nodeId);
+    set("isNodeSwitching", true);
+    hidePhrase();
+    animateCardToNodeAndClose(activeNodeId);
+  }
+}
+async function setOverlayContent(nodeId) {
+  const nodes = get("nodes");
+  const node = nodes.find((n) => n.id === nodeId);
+  if (!node || !overlayEl || !cardEl)
+    return;
+  const eyebrow = query(".eyebrow", overlayEl);
+  const titleEl = query("h2", overlayEl);
+  const ledeEl = query(".lede", overlayEl);
+  if (eyebrow)
+    eyebrow.textContent = node.type ? `Container: ${node.type}` : "Container";
+  if (titleEl)
+    titleEl.textContent = node.title || node.id;
+  setContainerType(overlayEl, node);
+  const renderer = getRendererForNode(node);
+  if (renderer) {
+    await renderer.render(nodeId, cardEl);
+    if (node.type === "curiosity") {
+      const { getRefreshCallback } = await import("./curiosity-4vn8p1s8.js");
+      refreshCuriosityLines = getRefreshCallback();
+    }
+  } else {
+    clearContainerContent(cardEl);
+    if (ledeEl) {
+      ledeEl.textContent = "This is a stub for the container. Hook nodes or nav to enter here.";
+    }
+  }
+}
 function animateCardFromNode(nodeId) {
-  if (!cardEl) return;
-  const dot = dotElementsById.get(nodeId);
-  if (!dot) return;
+  if (!cardEl)
+    return;
+  const dotElements2 = getDotElements();
+  const dot = dotElements2.get(nodeId);
+  if (!dot)
+    return;
   const from = dot.getBoundingClientRect();
   const to = cardEl.getBoundingClientRect();
-
   isAnimatingContainer = true;
-  cardEl.style.transformOrigin = 'top left';
-  cardEl.style.transition = 'none';
-  cardEl.style.borderRadius = '999px';
+  cardEl.style.transformOrigin = "top left";
+  cardEl.style.transition = "none";
+  cardEl.style.borderRadius = "999px";
   cardEl.style.transform = `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${Math.max(0.01, from.width / to.width)}, ${Math.max(0.01, from.height / to.height)})`;
-
   cardEl.getBoundingClientRect();
-
   requestAnimationFrame(() => {
-    cardEl.style.transition = 'transform 420ms ease, border-radius 420ms ease';
-    cardEl.style.borderRadius = 'var(--radius)';
-    cardEl.style.transform = 'translate(0px, 0px) scale(1, 1)';
+    if (!cardEl)
+      return;
+    cardEl.style.transition = "transform 420ms ease, border-radius 420ms ease";
+    cardEl.style.borderRadius = "var(--radius)";
+    cardEl.style.transform = "translate(0px, 0px) scale(1, 1)";
   });
-
   const onEnd = (e) => {
-    if (e.propertyName !== 'transform') return;
-    cardEl.removeEventListener('transitionend', onEnd);
+    if (e.propertyName !== "transform" || !cardEl)
+      return;
+    cardEl.removeEventListener("transitionend", onEnd);
     isAnimatingContainer = false;
-    if (typeof refreshCuriosityLines === 'function') {
+    if (typeof refreshCuriosityLines === "function") {
       refreshCuriosityLines();
     }
   };
-  cardEl.addEventListener('transitionend', onEnd);
+  cardEl.addEventListener("transitionend", onEnd);
 }
-
 function animateCardToNodeAndClose(nodeId) {
   if (!cardEl) {
     closeEssay();
     return;
   }
-  const dot = dotElementsById.get(nodeId);
+  const dotElements2 = getDotElements();
+  const dot = dotElements2.get(nodeId);
   if (!dot) {
     closeEssay();
     return;
   }
-
   const to = dot.getBoundingClientRect();
   const from = cardEl.getBoundingClientRect();
   isAnimatingContainer = true;
-  cardEl.style.transformOrigin = 'top left';
-  cardEl.style.transition = 'transform 420ms ease, border-radius 420ms ease';
-  cardEl.style.borderRadius = '999px';
+  cardEl.style.transformOrigin = "top left";
+  cardEl.style.transition = "transform 420ms ease, border-radius 420ms ease";
+  cardEl.style.borderRadius = "999px";
   cardEl.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${Math.max(0.01, to.width / from.width)}, ${Math.max(0.01, to.height / from.height)})`;
-
   const onEnd = (e) => {
-    if (e.propertyName !== 'transform') return;
-    cardEl.removeEventListener('transitionend', onEnd);
+    if (e.propertyName !== "transform" || !cardEl)
+      return;
+    cardEl.removeEventListener("transitionend", onEnd);
     isAnimatingContainer = false;
     closeEssay();
+    const isNodeSwitching = get("isNodeSwitching");
+    const pendingNodeId = get("pendingNodeId");
     if (isNodeSwitching && pendingNodeId) {
       const targetId = pendingNodeId;
-      pendingNodeId = null;
+      set("pendingNodeId", null);
       window.setTimeout(() => {
-        isNodeSwitching = false;
+        set("isNodeSwitching", false);
         focusEssay(targetId);
       }, 420);
     } else {
       showPhraseSlow();
     }
-
     window.setTimeout(() => {
-      if (!cardEl) return;
-      cardEl.style.transition = 'none';
-      cardEl.style.transform = '';
-      cardEl.style.borderRadius = '';
-      cardEl.style.transition = '';
+      if (!cardEl)
+        return;
+      cardEl.style.transition = "none";
+      cardEl.style.transform = "";
+      cardEl.style.borderRadius = "";
+      cardEl.style.transition = "";
     }, 260);
   };
-  cardEl.addEventListener('transitionend', onEnd);
+  cardEl.addEventListener("transitionend", onEnd);
 }
-
 function requestCloseContainer() {
-  if (!isContainerMode || isAnimatingContainer) return;
+  const isContainerMode = get("isContainerMode");
+  if (!isContainerMode || isAnimatingContainer)
+    return;
+  const activeNodeId = get("activeNodeId");
   if (!activeNodeId) {
     closeEssay();
     return;
   }
   animateCardToNodeAndClose(activeNodeId);
 }
-
 function applyContainerModeLayout(nodeId) {
-  if (!webEl) return;
+  if (!webEl)
+    return;
   const rect = webEl.getBoundingClientRect();
   const pad = 18;
   const xLeft = pad;
   const xRight = Math.max(pad, rect.width - pad - DOT_SIZE);
-
-  const otherIds = lastNodesPx.map((n) => n.id).filter((id) => id !== nodeId);
+  const nodesPx = getCurrentNodesPx();
+  const dotElements2 = getDotElements();
+  const otherIds = nodesPx.map((n) => n.id).filter((id) => id !== nodeId);
   const availableH = Math.max(1, rect.height - pad * 2);
   const midX = rect.width / 2;
-
   const leftIds = [];
   const rightIds = [];
-
   otherIds.forEach((id) => {
-    const n = lastNodesPx.find((p) => p.id === id);
+    const n = nodesPx.find((p) => p.id === id);
     const x = n?.center?.x ?? midX;
-    if (x <= midX) leftIds.push(id);
-    else rightIds.push(id);
+    if (x <= midX)
+      leftIds.push(id);
+    else
+      rightIds.push(id);
   });
-
   function layoutSide(ids, xTarget) {
-    ids
-      .sort((a, b) => {
-        const na = lastNodesPx.find((n) => n.id === a);
-        const nb = lastNodesPx.find((n) => n.id === b);
-        return (na?.center?.y ?? 0) - (nb?.center?.y ?? 0);
-      })
-      .forEach((id, idx) => {
-        const dot = dotElementsById.get(id);
-        if (!dot) return;
-
-        const count = ids.length;
-        const t = count <= 1 ? 0.5 : idx / (count - 1);
-        const y = pad + t * availableH;
-
-        dot.classList.add('container-nav');
-        dot.classList.remove('container-active');
-        dot.classList.remove('container-hidden');
-        dot.style.left = `${xTarget}px`;
-        dot.style.top = `${Math.max(pad, Math.min(rect.height - pad, y))}px`;
-        dot.style.zIndex = '35';
-      });
+    ids.sort((a, b) => {
+      const na = nodesPx.find((n) => n.id === a);
+      const nb = nodesPx.find((n) => n.id === b);
+      return (na?.center?.y ?? 0) - (nb?.center?.y ?? 0);
+    }).forEach((id, idx) => {
+      const dot = dotElements2.get(id);
+      if (!dot)
+        return;
+      const count = ids.length;
+      const t = count <= 1 ? 0.5 : idx / (count - 1);
+      const y = pad + t * availableH;
+      setDotContainerMode(dot, "nav");
+      dot.style.left = `${xTarget}px`;
+      dot.style.top = `${Math.max(pad, Math.min(rect.height - pad, y))}px`;
+      dot.style.zIndex = "35";
+    });
   }
-
   layoutSide(leftIds, xLeft);
   layoutSide(rightIds, xRight);
-
-  const activeDot = dotElementsById.get(nodeId);
+  const activeDot = dotElements2.get(nodeId);
   if (activeDot) {
-    activeDot.classList.remove('container-nav');
-    activeDot.classList.add('container-active');
-    activeDot.classList.add('container-hidden');
-    activeDot.style.zIndex = '36';
+    setDotContainerMode(activeDot, "active-hidden");
+    activeDot.style.zIndex = "36";
   }
 }
-
 function checkScrollIndicator() {
-  if (!cardEl || !overlayEl) return;
-
+  if (!cardEl || !overlayEl)
+    return;
   const hasScroll = cardEl.scrollHeight > cardEl.clientHeight;
   const isNearBottom = cardEl.scrollHeight - cardEl.scrollTop - cardEl.clientHeight < 50;
-
   if (hasScroll && !isNearBottom) {
-    overlayEl.classList.add('has-scroll');
+    overlayEl.classList.add("has-scroll");
   } else {
-    overlayEl.classList.remove('has-scroll');
+    overlayEl.classList.remove("has-scroll");
   }
 }
-
-function enterContainerMode(nodeId) {
-  if (!nodeId) return;
-  isContainerMode = true;
-  activeNodeId = nodeId;
-
+async function enterContainerMode(nodeId) {
+  if (!nodeId)
+    return;
+  set("isContainerMode", true);
+  set("activeNodeId", nodeId);
+  updateUrlForNode(nodeId);
   hidePhrase();
-  setOverlayContent(nodeId);
+  await setOverlayContent(nodeId);
   applyContainerModeLayout(nodeId);
   animateCardFromNode(nodeId);
-
-  // Check scroll indicator after content loads
   setTimeout(() => {
     checkScrollIndicator();
     if (cardEl) {
-      cardEl.addEventListener('scroll', checkScrollIndicator);
+      cardEl.addEventListener("scroll", checkScrollIndicator);
     }
   }, 500);
 }
-
 function exitContainerMode() {
-  isContainerMode = false;
-  activeNodeId = null;
-
-  // Remove scroll listener and indicator class
+  set("isContainerMode", false);
+  set("activeNodeId", null);
+  updateUrlForNode(null);
   if (cardEl) {
-    cardEl.removeEventListener('scroll', checkScrollIndicator);
+    cardEl.removeEventListener("scroll", checkScrollIndicator);
   }
   if (overlayEl) {
-    overlayEl.classList.remove('has-scroll');
+    overlayEl.classList.remove("has-scroll");
   }
-
-  dotElementsById.forEach((dot) => {
-    dot.classList.remove('container-nav');
-    dot.classList.remove('container-active');
-    dot.classList.remove('container-hidden');
-    dot.style.zIndex = '';
-
-    const origLeft = dot.dataset.origLeft;
-    const origTop = dot.dataset.origTop;
-    if (origLeft != null) dot.style.left = origLeft;
-    if (origTop != null) dot.style.top = origTop;
-  });
+  resetDotPositions();
+  refreshCuriosityLines = null;
 }
-
-function renderWeb() {
-  if (!webEl) return;
-  webEl.innerHTML = '';
-  dotElementsById = new Map();
-
-  const rect = webEl.getBoundingClientRect();
-  const nodesPx = nodes.map((n) => ({
-    ...n,
-    center: {
-      x: (n.x / 100) * rect.width,
-      y: (n.y / 100) * rect.height,
-    },
-  }));
-
-  lastNodesPx = nodesPx;
-
-  const threadElements = [];
-  threads.forEach((t, idx) => {
-    const from = nodesPx.find((n) => n.id === t.from);
-    const to = nodesPx.find((n) => n.id === t.to);
-    if (!from || !to) return;
-    const line = document.createElement('div');
-    line.className = 'thread';
-    const primaryThread = t.threads && t.threads.length ? t.threads[0] : 'questions';
-    const palette = threadPalettes[primaryThread] || threadPalettes.questions;
-    line.dataset.thread = primaryThread;
-    line.dataset.from = t.from;
-    line.dataset.to = t.to;
-    line.style.setProperty('--i', idx);
-    line.style.setProperty('--strand1', palette[0]);
-    line.style.setProperty('--strand2', palette[1]);
-    line.style.setProperty('--strand3', palette[2]);
-    const x1 = from.center.x;
-    const y1 = from.center.y;
-    const x2 = to.center.x;
-    const y2 = to.center.y;
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const dist = Math.hypot(dx, dy);
-    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-    line.style.width = `${dist}px`;
-    line.style.left = `${x1}px`;
-    line.style.top = `${y1}px`;
-    line.style.transformOrigin = '0 0';
-    line.style.transform = `rotate(${angle}deg)`;
-    webEl.appendChild(line);
-    threadElements.push(line);
-  });
-
-  nodesPx.forEach((node, i) => {
-    const dot = document.createElement('div');
-    dot.className = 'node-dot floating';
-    dot.dataset.type = node.type;
-    dot.dataset.id = node.id;
-    dot.style.setProperty('--i', i);
-    dot.style.left = `${node.center.x - DOT_RADIUS}px`;
-    dot.style.top = `${node.center.y - DOT_RADIUS}px`;
-    dot.dataset.origLeft = dot.style.left;
-    dot.dataset.origTop = dot.style.top;
-    dot.title = node.title || node.id;
-    dot.addEventListener('click', () => {
-      if (isAnimatingContainer) return;
-      if (isContainerMode) {
-        if (node.id === activeNodeId) {
-          requestCloseContainer();
-          return;
-        }
-        pendingNodeId = node.id;
-        isNodeSwitching = true;
-        hidePhrase();
-        animateCardToNodeAndClose(activeNodeId);
-        return;
-      }
-      focusEssay(node.id);
-    });
-    dot.addEventListener('mouseenter', () => {
-      startParticleStreams(node.id, nodesPx, threadElements);
-      if (node.type === 'curiosity') {
-        const cached = curiosityCentralById.get(node.id);
-        if (cached) {
-          dot.title = cached;
-        } else {
-          loadJSON(`content/curiosities/${node.id}.json`)
-            .then((data) => {
-              const central = data?.central || node.id;
-              curiosityCentralById.set(node.id, central);
-              dot.title = central;
-            })
-            .catch(() => {
-              curiosityCentralById.set(node.id, node.id);
-              dot.title = node.id;
-            });
-        }
-      }
-    });
-    dot.addEventListener('mouseleave', () => {
-      stopParticleStreams(node.id);
-    });
-    webEl.appendChild(dot);
-    dotElementsById.set(node.id, dot);
-  });
-
-  if (isContainerMode && activeNodeId) {
-    enterContainerMode(activeNodeId);
+function handleNodeClick(node) {
+  if (isAnimatingContainer)
+    return;
+  if (node.type === "bio") {
+    return;
+  }
+  const isContainerMode = get("isContainerMode");
+  const activeNodeId = get("activeNodeId");
+  if (isContainerMode) {
+    if (node.id === activeNodeId) {
+      requestCloseContainer();
+      return;
+    }
+    set("pendingNodeId", node.id);
+    set("isNodeSwitching", true);
+    hidePhrase();
+    animateCardToNodeAndClose(activeNodeId);
+    return;
+  }
+  focusEssay(node.id);
+}
+function handleNodeHoverEnter(node) {
+  if (!webEl)
+    return;
+  const nodesPx = getCurrentNodesPx();
+  const threadElements2 = getThreadElements();
+  startParticleStreams(node.id, nodesPx, threadElements2, webEl);
+  if (node.type === "bio") {
+    console.log("Bio hover:", node.id, "bioText:", node.bioText);
+    if (node.bioText) {
+      showCustomPhrase(node.bioText);
+    }
+    return;
+  }
+  if (node.type === "curiosity") {
+    const cached = curiosityCentralById.get(node.id);
+    const dot = getDotElements().get(node.id);
+    if (cached && dot) {
+      dot.title = cached;
+    } else {
+      loadJSON(`content/curiosities/${node.id}.json`).then((data) => {
+        const central = data?.central || node.id;
+        curiosityCentralById.set(node.id, central);
+        if (dot)
+          dot.title = central;
+      }).catch(() => {
+        curiosityCentralById.set(node.id, node.id);
+        if (dot)
+          dot.title = node.id;
+      });
+    }
   }
 }
-
+function handleNodeHoverLeave(node) {
+  stopParticleStreams(node.id);
+  if (node.type === "bio") {
+    restorePhrase();
+  }
+}
 async function initLanding() {
   try {
     const [phrasesData, nodesData, threadsData] = await Promise.all([
-      loadJSON('content/phrases.json'),
-      loadJSON('content/nodes/sample-nodes.json'),
-      loadJSON('content/connections.json'),
+      loadJSON("content/phrases.json"),
+      loadJSON("content/nodes/sample-nodes.json"),
+      loadJSON("content/connections.json")
     ]);
-    phrases = phrasesData;
-    nodes = nodesData;
-    threads = threadsData;
-    rotatePhrase();
-    renderWeb();
+    set("phrases", phrasesData);
+    set("nodes", nodesData);
+    set("threads", threadsData);
+    initPhrase();
+    rotatePhrase(phrasesData);
+    renderWeb(webEl, {
+      onClick: handleNodeClick,
+      onHoverEnter: handleNodeHoverEnter,
+      onHoverLeave: handleNodeHoverLeave
+    });
+    const initialNodeId = getNodeIdFromUrl();
+    if (initialNodeId) {
+      const nodeExists = nodesData.some((n) => n.id === initialNodeId);
+      if (nodeExists) {
+        setTimeout(() => focusEssay(initialNodeId), 100);
+      }
+    }
   } catch (err) {
-    console.error('Landing init failed', err);
+    console.error("Landing init failed", err);
   }
 }
-
 initLanding();
-
 if (closeBtnEl) {
-  closeBtnEl.addEventListener('click', (e) => {
+  closeBtnEl.addEventListener("click", (e) => {
     e.preventDefault();
     requestCloseContainer();
   });
 }
-
-document.addEventListener('pointerdown', (e) => {
-  if (!isContainerMode) return;
-  if (isAnimatingContainer) return;
-
-  if (cardEl && cardEl.contains(e.target)) return;
-  if (e.target?.closest?.('.node-dot')) return;
-  if (e.target?.closest?.('.theme-toggle')) return;
-  if (e.target?.closest?.('.site-header')) return;
+document.addEventListener("pointerdown", (e) => {
+  const isContainerMode = get("isContainerMode");
+  if (!isContainerMode)
+    return;
+  if (isAnimatingContainer)
+    return;
+  const target = e.target;
+  if (cardEl && cardEl.contains(target))
+    return;
+  if (target?.closest?.(".node-dot"))
+    return;
+  if (target?.closest?.(".theme-toggle"))
+    return;
+  if (target?.closest?.(".site-header"))
+    return;
   requestCloseContainer();
 });
-
-window.addEventListener('container:open', (e) => {
+window.addEventListener("container:open", (e) => {
   const nodeId = e?.detail?.nodeId;
-  if (!nodeId) return;
+  if (!nodeId)
+    return;
   enterContainerMode(nodeId);
 });
-
-window.addEventListener('container:close', () => {
+window.addEventListener("container:close", () => {
   exitContainerMode();
 });
+window.addEventListener("popstate", handlePopState);

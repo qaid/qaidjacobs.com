@@ -1,0 +1,130 @@
+/**
+ * Durational container styles
+ * Long-form media: DJ mixes, talks, podcasts
+ * Atmosphere: saturated but muted, Brownian motion particles
+ */
+
+/* Center the container in viewport */
+.container-overlay.is-durational {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container-overlay.is-durational .essay-container-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Fixed dimensions for consistent centering */
+  width: min(900px, 92vw);
+  height: min(85vh, 800px);
+}
+
+/* Container type overrides */
+.container-overlay.is-durational .container-card {
+  background: var(--durational-bg);
+  max-width: 900px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.container-overlay.is-durational .container-card::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+/* Hide header lede - only show title */
+.container-overlay.is-durational .lede {
+  display: none;
+}
+
+/* Main content wrapper */
+.durational-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) 0;
+  min-height: 400px;
+}
+
+/* Particle background */
+.durational-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.8;
+  z-index: 0;
+}
+
+.durational-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--durational-particle);
+  will-change: transform;
+}
+
+/* Media player */
+.durational-player {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  background: var(--paper);
+}
+
+.durational-embed {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Description section below player */
+.durational-description {
+  position: relative;
+  z-index: 1;
+  max-width: 56ch; /* Optimal reading width */
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--size-md);
+  line-height: 1.75;
+  color: var(--fg);
+  text-align: left;
+  font-style: normal;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .durational-content {
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+  }
+
+  .durational-player {
+    max-width: 100%;
+    border-radius: calc(var(--radius) * 0.75);
+  }
+
+  .durational-description {
+    font-size: var(--size-sm);
+  }
+}
+
+/* Audio-specific styling (SoundCloud/Mixcloud) */
+.container-overlay.is-durational[data-subtype="dj-mix"] .durational-player,
+.container-overlay.is-durational[data-subtype="podcast"] .durational-player {
+  aspect-ratio: 16 / 5;
+}
+
+/* Scroll indicator for durational - same approach as essay */
+.container-overlay.is-durational.has-scroll .essay-container-wrapper .scroll-indicator {
+  opacity: 1;
+  animation: bounce 2s ease-in-out infinite;
+}

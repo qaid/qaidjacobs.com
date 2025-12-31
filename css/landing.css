@@ -31,15 +31,12 @@ body.phrase-fade-in .phrase {
   padding: 0.75rem 1.25rem;
   background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.08));
   border-radius: 12px;
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-soft);
   max-width: min(720px, calc(100vw - (var(--space-6) * 2)));
 }
 
-@media (prefers-color-scheme: dark) {
-  .phrase > div {
-    background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15));
-    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
-  }
+html[data-theme="dark"] .phrase > div {
+  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15));
 }
 
 .phrase-text {
@@ -107,8 +104,9 @@ body.container-mode .particle {
   background: var(--thread-questions);
   color: var(--thread-questions);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-md);
   transition: transform 240ms ease, box-shadow 240ms ease, background 240ms ease, filter 240ms ease, left 520ms ease, top 520ms ease, opacity 260ms ease;
+  will-change: transform, left, top;
 }
 
 .node-dot[data-type="music"] {
@@ -174,8 +172,6 @@ body.container-mode .node-dot.container-active {
 .node-dot:hover {
   cursor: pointer;
   transform: scale(1.1);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
-  background: rgba(255, 255, 255, 0.12);
 }
 
 .thread.visible {
@@ -204,6 +200,30 @@ body.container-mode .node-dot.container-active {
   color: var(--thread-curiosity);
   background: var(--thread-curiosity);
   filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.45));
+}
+
+/* Bio node - black in light mode, white in dark mode */
+.node-dot[data-type="bio"] {
+  background: var(--fg);
+  color: var(--fg);
+  border: none;
+  filter: none;
+  box-shadow: none;
+  opacity: 0.7;
+  cursor: default;
+  transition: transform 240ms ease, opacity 240ms ease, left 520ms ease, top 520ms ease;
+}
+
+.node-dot[data-type="bio"]:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  cursor: default;
+}
+
+/* Hide bio node when in container mode */
+body.container-mode .node-dot[data-type="bio"] {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .curiosity-stage {
@@ -241,16 +261,6 @@ html[data-theme="dark"] .curiosity-lines line {
   stroke: rgba(255, 255, 255, 0.16);
 }
 
-html[data-theme="light"] .curiosity-lines line {
-  stroke: rgba(0, 0, 0, 0.18);
-}
-
-@media (prefers-color-scheme: dark) {
-  .curiosity-lines line {
-    stroke: rgba(255, 255, 255, 0.16);
-  }
-}
-
 .curiosity-center {
   position: absolute;
   left: 50%;
@@ -281,11 +291,6 @@ html[data-theme="dark"] .curiosity-center-pill {
   border-color: rgba(255, 255, 255, 0.14);
 }
 
-html[data-theme="light"] .curiosity-center-pill {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(0, 0, 0, 0.14);
-}
-
 .curiosity-item {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -301,21 +306,9 @@ html[data-theme="light"] .curiosity-center-pill {
   cursor: default;
 }
 
-@media (prefers-color-scheme: dark) {
-  .curiosity-item {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-}
-
 html[data-theme="dark"] .curiosity-item {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.14);
-}
-
-html[data-theme="light"] .curiosity-item {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(0, 0, 0, 0.14);
 }
 
 .curiosity-item .curiosity-label {
@@ -326,6 +319,30 @@ html[data-theme="light"] .curiosity-item {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Linked curiosity items - clickable */
+.curiosity-item-linked {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.curiosity-item-linked:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.curiosity-item-linked .curiosity-label {
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-underline-offset: 2px;
+  opacity: 1;
+}
+
+html[data-theme="dark"] .curiosity-item-linked:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .web {
@@ -402,6 +419,7 @@ html[data-theme="light"] .curiosity-item {
   pointer-events: none;
   opacity: 0;
   filter: blur(0.3px);
+  will-change: transform, opacity;
 }
 
 @keyframes particleFlow {

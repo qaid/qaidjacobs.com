@@ -26,6 +26,18 @@
     "y": 62
   },
   {
+    "id": "bio",
+    "title": "About",
+    "type": "bio",
+    "threads": [
+      "questions"
+    ],
+    "visible_on_landing": true,
+    "x": 50,
+    "y": 88,
+    "bioText": "In short, I'm Qa'id: father, designer, DJ, tinkerer, always in motion between places and questions."
+  },
+  {
     "id": "durational",
     "title": "Durational",
     "type": "movement",
@@ -38,44 +50,16 @@
     "y": 72
   },
   {
-    "id": "migration-essay",
-    "title": "Motion and Memory",
-    "type": "essay",
-    "subtype": "essay",
-    "description": "Reflections on movement, roots, and the Great Migration",
-    "threads": [
-      "questions",
-      "movement"
-    ],
-    "essayFile": "migration-essay.md",
-    "created": "2024-12-20",
-    "visible_on_landing": true,
-    "x": 63,
-    "y": 72
-  },
-  {
     "id": "mix-2019",
-    "title": "Summer 2019",
-    "type": "music",
-    "subtype": "mix",
+    "title": "Mortgage Music - Early 90's House Mix",
+    "type": "durational",
+    "subtype": "dj-mix",
     "threads": [
       "music"
     ],
     "visible_on_landing": true,
     "x": 22,
     "y": 28
-  },
-  {
-    "id": "movement-study",
-    "title": "Movement",
-    "type": "movement",
-    "subtype": "study",
-    "threads": [
-      "movement"
-    ],
-    "visible_on_landing": true,
-    "x": 38,
-    "y": 54
   },
   {
     "id": "sunday-morning-church-with-doc",

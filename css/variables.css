@@ -9,6 +9,11 @@
   --thread-curiosity: #3b82f6;
   --paper: rgba(0, 0, 0, 0.04);
   --border: 1px solid rgba(0, 0, 0, 0.08);
+
+  /* Shadows */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 14px 40px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.2);
   --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.15);
   
   /* Background gradients */
@@ -39,6 +44,11 @@
   --nav-height: 64px;
   --radius: 16px;
   --transition: 180ms ease;
+
+  /* Durational container - warm muted tones ("trendy brunch" vibe) */
+  --durational-bg: rgba(245, 240, 235, 0.98);
+  --durational-particle: rgba(180, 140, 100, 0.6);
+  --durational-accent: #c4956a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,6 +63,11 @@
     --thread-curiosity: #60a5fa;
     --paper: rgba(255, 255, 255, 0.04);
     --border: 1px solid rgba(255, 255, 255, 0.08);
+
+    /* Shadows */
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 14px 40px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.4);
     --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.35);
     
     /* Background gradients */
@@ -60,6 +75,11 @@
     --bg-gradient-2: rgba(79, 209, 197, 0.08);
     --bg-gradient-3: rgba(246, 197, 108, 0.08);
     --bg-base: rgba(12, 13, 14, 0.9);
+
+    /* Durational container - dark mode */
+    --durational-bg: rgba(25, 22, 20, 0.98);
+    --durational-particle: rgba(200, 160, 120, 0.4);
+    --durational-accent: #d4a574;
   }
 }
 
@@ -74,13 +94,23 @@
   --thread-curiosity: #60a5fa;
   --paper: rgba(255, 255, 255, 0.04);
   --border: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* Shadows */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 14px 40px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.4);
   --shadow-soft: 0 20px 60px rgba(0, 0, 0, 0.35);
-  
+
   /* Background gradients */
   --bg-gradient-1: rgba(255, 122, 158, 0.08);
   --bg-gradient-2: rgba(79, 209, 197, 0.08);
   --bg-gradient-3: rgba(246, 197, 108, 0.08);
   --bg-base: rgba(12, 13, 14, 0.9);
+
+  /* Durational container - dark mode */
+  --durational-bg: rgba(25, 22, 20, 0.98);
+  --durational-particle: rgba(200, 160, 120, 0.4);
+  --durational-accent: #d4a574;
 }
 
 @media (max-width: 640px) {
