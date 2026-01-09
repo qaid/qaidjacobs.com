@@ -361,45 +361,9 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
   }
 }
 
-.node-dot.floating {
-  animation: drift 16s ease-in-out infinite;
-}
-
-.node-dot {
-  animation: drift 16s ease-in-out infinite;
-}
-
-@keyframes drift {
-  0%, 100% {
-    transform: translate(0, 0);
-  }
-  20% {
-    transform: translate(2px, -3px);
-  }
-  40% {
-    transform: translate(-3px, 1px);
-  }
-  60% {
-    transform: translate(1px, 3px);
-  }
-  80% {
-    transform: translate(3px, -1px);
-  }
-}
-
-.node-dot:nth-child(2n) {
-  animation-duration: 18s;
-  animation-delay: -3s;
-}
-
-.node-dot:nth-child(3n) {
-  animation-duration: 20s;
-  animation-delay: -6s;
-}
-
-.node-dot:nth-child(5n) {
-  animation-duration: 22s;
-  animation-delay: -9s;
+.node-dot.brownian {
+  animation: none;
+  will-change: left, top;
 }
 
 .thread {

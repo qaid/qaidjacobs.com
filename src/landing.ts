@@ -25,6 +25,7 @@ import {
   resetDotPositions,
 } from './components/web';
 import { startParticleStreams, stopParticleStreams } from './components/particles';
+import { pauseMotion, resumeMotion, pauseAllMotion, resumeAllMotion } from './components/brownian';
 import { getRendererForNode, clearContainerContent, setContainerType } from './containers/base';
 
 // Import container renderers to register them
@@ -251,6 +252,8 @@ function requestCloseContainer(): void {
 function applyContainerModeLayout(nodeId: string): void {
   if (!webEl) return;
 
+  pauseAllMotion();
+
   const rect = webEl.getBoundingClientRect();
   const pad = 18;
   const xLeft = pad;
@@ -367,6 +370,7 @@ function exitContainerMode(): void {
 
   // Reset dot positions
   resetDotPositions();
+  resumeAllMotion();
   refreshCuriosityLines = null;
 }
 
@@ -405,6 +409,7 @@ function handleNodeHoverEnter(node: NodePx): void {
   if (!webEl) return;
   const nodesPx = getCurrentNodesPx();
   const threadElements = getThreadElements();
+  pauseMotion(node.id);
   startParticleStreams(node.id, nodesPx, threadElements, webEl);
 
   // Bio node: show bio text in phrase area
@@ -442,6 +447,7 @@ function handleNodeHoverEnter(node: NodePx): void {
  */
 function handleNodeHoverLeave(node: NodePx): void {
   stopParticleStreams(node.id);
+  resumeMotion(node.id);
 
   // Bio node: restore original phrase
   if (node.type === 'bio') {

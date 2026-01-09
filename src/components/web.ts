@@ -6,6 +6,7 @@
 import type { Node, NodePx, Thread, ThreadType } from '../types';
 import { createElement } from '../utils/dom';
 import { get, DOT_RADIUS, THREAD_PALETTES } from '../state/store';
+import { initBrownianMotion } from './brownian';
 
 // Callback types for external event handling
 export interface WebCallbacks {
@@ -84,7 +85,7 @@ function createNodeDot(
   callbacks: WebCallbacks
 ): HTMLElement {
   const dot = createElement('div', {
-    className: 'node-dot floating',
+    className: 'node-dot brownian',
     'data-type': node.type,
     'data-id': node.id,
   });
@@ -153,6 +154,9 @@ export function renderWeb(
     container.appendChild(dot);
     dotElements.set(node.id, dot);
   });
+
+  // Initialize Brownian motion
+  initBrownianMotion(dotElements);
 
   // Re-apply container mode if active
   const isContainerMode = get('isContainerMode');

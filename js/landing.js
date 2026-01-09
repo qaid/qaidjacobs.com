@@ -73,6 +73,126 @@ function restorePhrase() {
   }
 }
 
+// src/components/brownian.ts
+var MOTION_CONFIG = {
+  MAX_RADIUS: 15,
+  STEP_SIZE: 0.02,
+  DIRECTION_CHANGE_RATE: 0.98,
+  BASE_SPEED: 0.15
+};
+var dotMotions = new Map;
+var rafId = null;
+var globalPaused = false;
+function gaussianRandom() {
+  const u1 = Math.random();
+  const u2 = Math.random();
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+}
+function reflectAtBoundary(offsetX, offsetY, velocityX, velocityY, radius) {
+  const dist = Math.hypot(offsetX, offsetY);
+  if (dist > radius) {
+    const nx = offsetX / dist;
+    const ny = offsetY / dist;
+    const dot = velocityX * nx + velocityY * ny;
+    return {
+      vx: velocityX - 2 * dot * nx,
+      vy: velocityY - 2 * dot * ny
+    };
+  }
+  return { vx: velocityX, vy: velocityY };
+}
+function updateMotion() {
+  let hasActiveDots = false;
+  dotMotions.forEach((state) => {
+    if (state.isPaused || globalPaused) {
+      return;
+    }
+    hasActiveDots = true;
+    if (Math.random() > MOTION_CONFIG.DIRECTION_CHANGE_RATE) {
+      const angle = Math.random() * 2 * Math.PI;
+      const speed = MOTION_CONFIG.BASE_SPEED * (0.5 + Math.random() * 0.5);
+      state.velocityX = Math.cos(angle) * speed;
+      state.velocityY = Math.sin(angle) * speed;
+    }
+    state.velocityX += gaussianRandom() * MOTION_CONFIG.STEP_SIZE;
+    state.velocityY += gaussianRandom() * MOTION_CONFIG.STEP_SIZE;
+    state.offsetX += state.velocityX;
+    state.offsetY += state.velocityY;
+    const dist = Math.hypot(state.offsetX, state.offsetY);
+    if (dist > MOTION_CONFIG.MAX_RADIUS) {
+      const scale = MOTION_CONFIG.MAX_RADIUS / dist;
+      state.offsetX *= scale;
+      state.offsetY *= scale;
+      const reflected = reflectAtBoundary(state.offsetX, state.offsetY, state.velocityX, state.velocityY, MOTION_CONFIG.MAX_RADIUS);
+      state.velocityX = reflected.vx;
+      state.velocityY = reflected.vy;
+    }
+    state.dotElement.style.left = `${state.originalX + state.offsetX}px`;
+    state.dotElement.style.top = `${state.originalY + state.offsetY}px`;
+  });
+  if (hasActiveDots || !globalPaused) {
+    rafId = requestAnimationFrame(updateMotion);
+  } else {
+    rafId = null;
+  }
+}
+function initBrownianMotion(dotElements) {
+  stopBrownianMotion();
+  dotElements.forEach((dotElement, nodeId) => {
+    const origLeft = parseFloat(dotElement.dataset.origLeft || "0");
+    const origTop = parseFloat(dotElement.dataset.origTop || "0");
+    const angle = Math.random() * 2 * Math.PI;
+    const speed = MOTION_CONFIG.BASE_SPEED * (0.5 + Math.random() * 0.5);
+    dotMotions.set(nodeId, {
+      nodeId,
+      dotElement,
+      originalX: origLeft,
+      originalY: origTop,
+      offsetX: 0,
+      offsetY: 0,
+      velocityX: Math.cos(angle) * speed,
+      velocityY: Math.sin(angle) * speed,
+      isPaused: false
+    });
+  });
+  globalPaused = false;
+  if (rafId === null) {
+    rafId = requestAnimationFrame(updateMotion);
+  }
+}
+function pauseMotion(nodeId) {
+  const state = dotMotions.get(nodeId);
+  if (state) {
+    state.isPaused = true;
+  }
+}
+function resumeMotion(nodeId) {
+  const state = dotMotions.get(nodeId);
+  if (state) {
+    state.isPaused = false;
+    if (rafId === null && !globalPaused) {
+      rafId = requestAnimationFrame(updateMotion);
+    }
+  }
+}
+function pauseAllMotion() {
+  globalPaused = true;
+}
+function resumeAllMotion() {
+  globalPaused = false;
+  if (rafId === null) {
+    rafId = requestAnimationFrame(updateMotion);
+  }
+}
+function stopBrownianMotion() {
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+  dotMotions.clear();
+  globalPaused = false;
+}
+
 // src/components/web.ts
 var threadElements = [];
 var dotElements = new Map;
@@ -115,7 +235,7 @@ function createThreadLine(from, to, thread, index) {
 }
 function createNodeDot(node, index, callbacks) {
   const dot = createElement("div", {
-    className: "node-dot floating",
+    className: "node-dot brownian",
     "data-type": node.type,
     "data-id": node.id
   });
@@ -160,6 +280,7 @@ function renderWeb(container, callbacks) {
     container.appendChild(dot);
     dotElements.set(node.id, dot);
   });
+  initBrownianMotion(dotElements);
   const isContainerMode = get("isContainerMode");
   const activeNodeId = get("activeNodeId");
   if (isContainerMode && activeNodeId) {}
@@ -701,6 +822,7 @@ function requestCloseContainer() {
 function applyContainerModeLayout(nodeId) {
   if (!webEl)
     return;
+  pauseAllMotion();
   const rect = webEl.getBoundingClientRect();
   const pad = 18;
   const xLeft = pad;
@@ -785,6 +907,7 @@ function exitContainerMode() {
     overlayEl.classList.remove("has-scroll");
   }
   resetDotPositions();
+  resumeAllMotion();
   refreshCuriosityLines = null;
 }
 function handleNodeClick(node) {
@@ -813,6 +936,7 @@ function handleNodeHoverEnter(node) {
     return;
   const nodesPx = getCurrentNodesPx();
   const threadElements2 = getThreadElements();
+  pauseMotion(node.id);
   startParticleStreams(node.id, nodesPx, threadElements2, webEl);
   if (node.type === "bio") {
     console.log("Bio hover:", node.id, "bioText:", node.bioText);
@@ -842,6 +966,7 @@ function handleNodeHoverEnter(node) {
 }
 function handleNodeHoverLeave(node) {
   stopParticleStreams(node.id);
+  resumeMotion(node.id);
   if (node.type === "bio") {
     restorePhrase();
   }
