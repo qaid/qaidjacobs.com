@@ -6,7 +6,7 @@
   "scripts": {
     "generate-manifest": "node scripts/generate-manifest.js",
     "typecheck": "bun x tsc --noEmit",
-    "build:ts": "rm -f js/*.js && bun build src/main.ts src/landing.ts --outdir=js --format=esm --splitting && sed -i '' '$ { /^export { focusEssay, closeEssay };$/d; }' js/main.js",
+    "build:ts": "rm -f js/*.js && bun build src/main.ts src/landing.ts --outdir=js --format=esm --splitting && (sed -i '' '$ { /^export { focusEssay, closeEssay };$/d; }' js/main.js 2>/dev/null || sed -i '$ { /^export { focusEssay, closeEssay };$/d; }' js/main.js)",
     "predev": "npm run build",
     "dev": "bunx serve . --listen 3000",
     "build": "npm run generate-manifest && npm run build:ts",
