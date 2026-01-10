@@ -32,10 +32,15 @@ jobs:
       - name: Build site
         run: bun run build
 
+      - name: Create deployment directory
+        run: |
+          mkdir -p _site
+          rsync -av --exclude='cms' --exclude='src' --exclude='scripts' --exclude='.github' --exclude='node_modules' --exclude='.claude' --exclude='.cms-backups' --exclude='*.tmp' --exclude='package.json' --exclude='bun.lockb' --exclude='tsconfig.json' --exclude='.gitignore' ./ _site/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
   deploy:
     environment:
