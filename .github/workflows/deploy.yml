@@ -35,7 +35,10 @@ jobs:
       - name: Create deployment directory
         run: |
           mkdir -p _site
-          rsync -av --exclude='cms' --exclude='src' --exclude='scripts' --exclude='.github' --exclude='node_modules' --exclude='.claude' --exclude='.cms-backups' --exclude='*.tmp' --exclude='package.json' --exclude='bun.lockb' --exclude='tsconfig.json' --exclude='.gitignore' ./ _site/
+          cp -r index.html css js assets content CNAME .nojekyll _site/
+          # Copy README and LICENSE if they exist
+          [ -f README.md ] && cp README.md _site/ || true
+          [ -f LICENSE ] && cp LICENSE _site/ || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
