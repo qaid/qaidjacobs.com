@@ -8,15 +8,20 @@
 </head>
 <body>
   <header class="cms-header">
-    <h1>Content Management System</h1>
-    <div class="status">
-      <span class="status-indicator" id="status-indicator"></span>
-      <span id="status-text">Ready</span>
+    <h1>QJ.com CMS</h1>
+    <div class="header-actions">
+      <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+        <span class="theme-icon">🌙</span>
+      </button>
+      <a href="http://localhost:3000" target="_blank" class="status-btn">
+        <span id="status-text">Checking...</span>
+        <span class="external-link">↗</span>
+      </a>
     </div>
   </header>
 
   <div class="cms-container">
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <nav class="content-types">
         <button class="type-btn active" data-type="essays">Essays</button>
         <button class="type-btn" data-type="curiosities">Curiosities</button>
@@ -27,13 +32,33 @@
         <button class="type-btn" data-type="phrases">Phrases</button>
         <button class="type-btn" data-type="connections">Connections</button>
       </nav>
+      <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
     </aside>
 
     <main class="main-content">
       <section class="content-list-section">
         <div class="section-header">
           <h2 id="content-type-title">Essays</h2>
-          <button id="btn-create" class="btn btn-primary">Create New</button>
+          <div class="section-header-actions">
+            <div class="view-toggle">
+              <button id="btn-view-cards" class="view-btn active" data-view="cards" title="Card view">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <rect x="1" y="1" width="6" height="6" rx="1"/>
+                  <rect x="9" y="1" width="6" height="6" rx="1"/>
+                  <rect x="1" y="9" width="6" height="6" rx="1"/>
+                  <rect x="9" y="9" width="6" height="6" rx="1"/>
+                </svg>
+              </button>
+              <button id="btn-view-list" class="view-btn" data-view="list" title="List view">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <rect x="1" y="2" width="14" height="2" rx="1"/>
+                  <rect x="1" y="7" width="14" height="2" rx="1"/>
+                  <rect x="1" y="12" width="14" height="2" rx="1"/>
+                </svg>
+              </button>
+            </div>
+            <button id="btn-create" class="btn btn-primary">Create New</button>
+          </div>
         </div>
         <div id="content-list" class="content-list">
           <!-- Populated by JavaScript -->
@@ -41,12 +66,12 @@
       </section>
 
       <section id="edit-section" class="edit-section hidden">
-        <div class="section-header">
+        <div class="edit-header">
           <h2 id="edit-title">Edit Content</h2>
-          <div class="actions">
-            <button id="btn-cancel" class="btn btn-secondary">Cancel</button>
-            <button id="btn-save" class="btn btn-primary">Save</button>
-          </div>
+        </div>
+        <div class="edit-actions">
+          <button id="btn-cancel" class="btn btn-secondary">Cancel</button>
+          <button id="btn-save" class="btn btn-primary">Save</button>
         </div>
         <form id="edit-form" class="edit-form">
           <!-- Populated by JavaScript -->

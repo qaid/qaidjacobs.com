@@ -11,6 +11,8 @@ import { listNodes, getNode, createNode, updateNode, deleteNode } from './routes
 import { getEssay, updateEssay } from './routes/essays';
 import { getPhrases, updatePhrases, addPhrase, deletePhrase } from './routes/phrases';
 import { getConnections, updateConnections, addConnection, deleteConnection } from './routes/connections';
+import { getCuriosity } from './routes/curiosities';
+import { getDurational } from './routes/durational';
 import { regenerateManifest } from './services/manifest';
 
 const PORT = process.env.CMS_PORT ? parseInt(process.env.CMS_PORT) : 3001;
@@ -74,6 +76,17 @@ async function handleAPIRoute(req: Request, url: URL): Promise<Response> {
   }
 
   try {
+    // Health check endpoint
+    if (pathname === '/api/health' && method === 'GET') {
+      const health = {
+        success: true,
+        status: 'ready',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+      };
+      return new Response(JSON.stringify(health), { headers: corsHeaders });
+    }
+
     // Nodes routes
     if (pathname === '/api/nodes' && method === 'GET') {
       const result = await listNodes();
@@ -116,6 +129,20 @@ async function handleAPIRoute(req: Request, url: URL): Promise<Response> {
       const essayFile = pathname.replace('/api/essays/', '');
       const body = await req.json();
       const result = await updateEssay(essayFile, body.content);
+      return new Response(JSON.stringify(result), { headers: corsHeaders });
+    }
+
+    // Curiosity routes
+    if (pathname.startsWith('/api/curiosity/') && method === 'GET') {
+      const curiosityId = pathname.replace('/api/curiosity/', '');
+      const result = await getCuriosity(curiosityId);
+      return new Response(JSON.stringify(result), { headers: corsHeaders });
+    }
+
+    // Durational routes
+    if (pathname.startsWith('/api/durational/') && method === 'GET') {
+      const durationalId = pathname.replace('/api/durational/', '');
+      const result = await getDurational(durationalId);
       return new Response(JSON.stringify(result), { headers: corsHeaders });
     }
 
