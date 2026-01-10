@@ -75,10 +75,11 @@ function restorePhrase() {
 
 // src/components/brownian.ts
 var MOTION_CONFIG = {
-  MAX_RADIUS: 15,
-  STEP_SIZE: 0.02,
-  DIRECTION_CHANGE_RATE: 0.98,
-  BASE_SPEED: 0.15
+  STEP_SIZE: 0.005,
+  DIRECTION_CHANGE_RATE: 0.995,
+  BASE_SPEED: 0.08,
+  FOOTER_CLEARANCE: 320,
+  EDGE_PADDING: 20
 };
 var dotMotions = new Map;
 var rafId = null;
@@ -88,21 +89,20 @@ function gaussianRandom() {
   const u2 = Math.random();
   return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
 }
-function reflectAtBoundary(offsetX, offsetY, velocityX, velocityY, radius) {
-  const dist = Math.hypot(offsetX, offsetY);
-  if (dist > radius) {
-    const nx = offsetX / dist;
-    const ny = offsetY / dist;
-    const dot = velocityX * nx + velocityY * ny;
-    return {
-      vx: velocityX - 2 * dot * nx,
-      vy: velocityY - 2 * dot * ny
-    };
-  }
-  return { vx: velocityX, vy: velocityY };
+function getViewportBounds() {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const maxBottomY = viewportHeight - MOTION_CONFIG.FOOTER_CLEARANCE;
+  return {
+    minX: MOTION_CONFIG.EDGE_PADDING,
+    maxX: viewportWidth - MOTION_CONFIG.EDGE_PADDING,
+    minY: MOTION_CONFIG.EDGE_PADDING,
+    maxY: maxBottomY - MOTION_CONFIG.EDGE_PADDING
+  };
 }
 function updateMotion() {
   let hasActiveDots = false;
+  const bounds = getViewportBounds();
   dotMotions.forEach((state) => {
     if (state.isPaused || globalPaused) {
       return;
@@ -116,19 +116,24 @@ function updateMotion() {
     }
     state.velocityX += gaussianRandom() * MOTION_CONFIG.STEP_SIZE;
     state.velocityY += gaussianRandom() * MOTION_CONFIG.STEP_SIZE;
-    state.offsetX += state.velocityX;
-    state.offsetY += state.velocityY;
-    const dist = Math.hypot(state.offsetX, state.offsetY);
-    if (dist > MOTION_CONFIG.MAX_RADIUS) {
-      const scale = MOTION_CONFIG.MAX_RADIUS / dist;
-      state.offsetX *= scale;
-      state.offsetY *= scale;
-      const reflected = reflectAtBoundary(state.offsetX, state.offsetY, state.velocityX, state.velocityY, MOTION_CONFIG.MAX_RADIUS);
-      state.velocityX = reflected.vx;
-      state.velocityY = reflected.vy;
+    state.x += state.velocityX;
+    state.y += state.velocityY;
+    if (state.x < bounds.minX) {
+      state.x = bounds.minX;
+      state.velocityX = Math.abs(state.velocityX);
+    } else if (state.x > bounds.maxX) {
+      state.x = bounds.maxX;
+      state.velocityX = -Math.abs(state.velocityX);
     }
-    state.dotElement.style.left = `${state.originalX + state.offsetX}px`;
-    state.dotElement.style.top = `${state.originalY + state.offsetY}px`;
+    if (state.y < bounds.minY) {
+      state.y = bounds.minY;
+      state.velocityY = Math.abs(state.velocityY);
+    } else if (state.y > bounds.maxY) {
+      state.y = bounds.maxY;
+      state.velocityY = -Math.abs(state.velocityY);
+    }
+    state.dotElement.style.left = `${state.x}px`;
+    state.dotElement.style.top = `${state.y}px`;
   });
   if (hasActiveDots || !globalPaused) {
     rafId = requestAnimationFrame(updateMotion);
@@ -139,17 +144,15 @@ function updateMotion() {
 function initBrownianMotion(dotElements) {
   stopBrownianMotion();
   dotElements.forEach((dotElement, nodeId) => {
-    const origLeft = parseFloat(dotElement.dataset.origLeft || "0");
-    const origTop = parseFloat(dotElement.dataset.origTop || "0");
+    const currentLeft = parseFloat(dotElement.style.left || "0");
+    const currentTop = parseFloat(dotElement.style.top || "0");
     const angle = Math.random() * 2 * Math.PI;
     const speed = MOTION_CONFIG.BASE_SPEED * (0.5 + Math.random() * 0.5);
     dotMotions.set(nodeId, {
       nodeId,
       dotElement,
-      originalX: origLeft,
-      originalY: origTop,
-      offsetX: 0,
-      offsetY: 0,
+      x: currentLeft,
+      y: currentTop,
       velocityX: Math.cos(angle) * speed,
       velocityY: Math.sin(angle) * speed,
       isPaused: false
@@ -334,12 +337,22 @@ var PARTICLE_COUNT = 25;
 var STREAM_DURATION = 2400;
 var activeStreams = new Map;
 var streamParticles = new Map;
-function createParticle(container, sourceNode, targetNode, color, streamId, index, onComplete) {
+function getCurrentDotPosition(dotElement) {
+  const left = parseFloat(dotElement.style.left || "0");
+  const top = parseFloat(dotElement.style.top || "0");
+  const DOT_RADIUS2 = 12;
+  return {
+    x: left + DOT_RADIUS2,
+    y: top + DOT_RADIUS2
+  };
+}
+function createParticle(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId, index, onComplete) {
   const particle = createElement("div", { className: "particle" });
   particle.style.background = color;
   particle.style.boxShadow = `0 0 4px ${color}, 0 0 2px ${color}`;
-  particle.style.left = `${sourceNode.center.x}px`;
-  particle.style.top = `${sourceNode.center.y}px`;
+  const sourcePos = getCurrentDotPosition(sourceDot);
+  particle.style.left = `${sourcePos.x}px`;
+  particle.style.top = `${sourcePos.y}px`;
   container.appendChild(particle);
   const baseDelay = STREAM_DURATION / PARTICLE_COUNT;
   const randomDelay = baseDelay * index * (0.8 + Math.random() * 0.4);
@@ -350,15 +363,17 @@ function createParticle(container, sourceNode, targetNode, color, streamId, inde
       return;
     }
     particle.style.opacity = "1";
-    const startX = sourceNode.center.x;
-    const startY = sourceNode.center.y;
-    const endX = targetNode.center.x;
-    const endY = targetNode.center.y;
-    const dx = endX - startX;
-    const dy = endY - startY;
-    const distance = Math.hypot(dx, dy);
-    const perpX = -dy / distance;
-    const perpY = dx / distance;
+    const startPos = getCurrentDotPosition(sourceDot);
+    const endPos = getCurrentDotPosition(targetDot);
+    let startX = startPos.x;
+    let startY = startPos.y;
+    let endX = endPos.x;
+    let endY = endPos.y;
+    let dx = endX - startX;
+    let dy = endY - startY;
+    let distance = Math.hypot(dx, dy);
+    let perpX = -dy / distance;
+    let perpY = dx / distance;
     const waveAmplitude = 3 + Math.random() * 4;
     const waveFrequency = 2 + Math.random() * 2;
     const randomOffset = (Math.random() - 0.5) * 2;
@@ -372,6 +387,17 @@ function createParticle(container, sourceNode, targetNode, color, streamId, inde
         startTime = timestamp;
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / randomDuration, 1);
+      const currentStartPos = getCurrentDotPosition(sourceDot);
+      const currentEndPos = getCurrentDotPosition(targetDot);
+      startX = currentStartPos.x;
+      startY = currentStartPos.y;
+      endX = currentEndPos.x;
+      endY = currentEndPos.y;
+      dx = endX - startX;
+      dy = endY - startY;
+      distance = Math.hypot(dx, dy);
+      perpX = -dy / distance;
+      perpY = dx / distance;
       const easeProgress = easeInOutQuad(progress);
       const wave = Math.sin(easeProgress * Math.PI * waveFrequency) * waveAmplitude * (1 - easeProgress);
       const currentX = startX + dx * easeProgress + perpX * (wave + randomOffset);
@@ -389,12 +415,12 @@ function createParticle(container, sourceNode, targetNode, color, streamId, inde
   }, randomDelay);
   return particle;
 }
-function createParticleStream(container, sourceNode, targetNode, color, streamId) {
+function createParticleStream(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId) {
   const particles = [];
   function spawnParticle(index) {
     if (!activeStreams.has(streamId))
       return;
-    const particle = createParticle(container, sourceNode, targetNode, color, streamId, index, () => {
+    const particle = createParticle(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId, index, () => {
       if (activeStreams.has(streamId)) {
         spawnParticle(index);
       }
@@ -406,24 +432,30 @@ function createParticleStream(container, sourceNode, targetNode, color, streamId
   }
   return particles;
 }
-function startParticleStreams(nodeId, nodesPx, threadElements2, container) {
+function startParticleStreams(nodeId, nodesPx, threadElements2, container, dotElements2) {
   stopParticleStreams(nodeId);
   const connectedThreads = threadElements2.filter((thread) => thread.dataset.from === nodeId || thread.dataset.to === nodeId);
   const allParticles = [];
   connectedThreads.forEach((thread, idx) => {
-    const fromNode = nodesPx.find((n) => n.id === thread.dataset.from);
-    const toNode = nodesPx.find((n) => n.id === thread.dataset.to);
-    if (!fromNode || !toNode)
+    const fromNodeId = thread.dataset.from;
+    const toNodeId = thread.dataset.to;
+    if (!fromNodeId || !toNodeId)
+      return;
+    const fromDot = dotElements2.get(fromNodeId);
+    const toDot = dotElements2.get(toNodeId);
+    if (!fromDot || !toDot)
       return;
     const primaryThread = thread.dataset.thread || "questions";
     const palette = THREAD_PALETTES[primaryThread] || THREAD_PALETTES.questions;
     const color = palette[0];
-    const isFromHovered = thread.dataset.from === nodeId;
-    const sourceNode = isFromHovered ? fromNode : toNode;
-    const targetNode = isFromHovered ? toNode : fromNode;
+    const isFromHovered = fromNodeId === nodeId;
+    const sourceNodeId = isFromHovered ? fromNodeId : toNodeId;
+    const targetNodeId = isFromHovered ? toNodeId : fromNodeId;
+    const sourceDot = isFromHovered ? fromDot : toDot;
+    const targetDot = isFromHovered ? toDot : fromDot;
     const streamId = `${nodeId}-${idx}`;
     activeStreams.set(streamId, true);
-    const particles = createParticleStream(container, sourceNode, targetNode, color, streamId);
+    const particles = createParticleStream(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId);
     allParticles.push(...particles);
   });
   streamParticles.set(nodeId, allParticles);
@@ -936,8 +968,9 @@ function handleNodeHoverEnter(node) {
     return;
   const nodesPx = getCurrentNodesPx();
   const threadElements2 = getThreadElements();
+  const dotElements2 = getDotElements();
   pauseMotion(node.id);
-  startParticleStreams(node.id, nodesPx, threadElements2, webEl);
+  startParticleStreams(node.id, nodesPx, threadElements2, webEl, dotElements2);
   if (node.type === "bio") {
     console.log("Bio hover:", node.id, "bioText:", node.bioText);
     if (node.bioText) {

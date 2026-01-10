@@ -17,12 +17,27 @@ const activeStreams = new Map<string, boolean>();
 const streamParticles = new Map<string, HTMLElement[]>();
 
 /**
+ * Get current center position of a node dot from DOM
+ */
+function getCurrentDotPosition(dotElement: HTMLElement): { x: number; y: number } {
+  const left = parseFloat(dotElement.style.left || '0');
+  const top = parseFloat(dotElement.style.top || '0');
+  const DOT_RADIUS = 12; // Half of DOT_SIZE (24px)
+  return {
+    x: left + DOT_RADIUS,
+    y: top + DOT_RADIUS,
+  };
+}
+
+/**
  * Create a single particle that flows from source to target
  */
 function createParticle(
   container: HTMLElement,
-  sourceNode: NodePx,
-  targetNode: NodePx,
+  sourceNodeId: string,
+  targetNodeId: string,
+  sourceDot: HTMLElement,
+  targetDot: HTMLElement,
   color: string,
   streamId: string,
   index: number,
@@ -31,8 +46,10 @@ function createParticle(
   const particle = createElement('div', { className: 'particle' });
   particle.style.background = color;
   particle.style.boxShadow = `0 0 4px ${color}, 0 0 2px ${color}`;
-  particle.style.left = `${sourceNode.center.x}px`;
-  particle.style.top = `${sourceNode.center.y}px`;
+
+  const sourcePos = getCurrentDotPosition(sourceDot);
+  particle.style.left = `${sourcePos.x}px`;
+  particle.style.top = `${sourcePos.y}px`;
 
   container.appendChild(particle);
 
@@ -48,16 +65,19 @@ function createParticle(
 
     particle.style.opacity = '1';
 
-    const startX = sourceNode.center.x;
-    const startY = sourceNode.center.y;
-    const endX = targetNode.center.x;
-    const endY = targetNode.center.y;
+    // Get initial positions from current dot locations
+    const startPos = getCurrentDotPosition(sourceDot);
+    const endPos = getCurrentDotPosition(targetDot);
+    let startX = startPos.x;
+    let startY = startPos.y;
+    let endX = endPos.x;
+    let endY = endPos.y;
 
-    const dx = endX - startX;
-    const dy = endY - startY;
-    const distance = Math.hypot(dx, dy);
-    const perpX = -dy / distance;
-    const perpY = dx / distance;
+    let dx = endX - startX;
+    let dy = endY - startY;
+    let distance = Math.hypot(dx, dy);
+    let perpX = -dy / distance;
+    let perpY = dx / distance;
 
     const waveAmplitude = 3 + Math.random() * 4;
     const waveFrequency = 2 + Math.random() * 2;
@@ -74,6 +94,20 @@ function createParticle(
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / randomDuration, 1);
+
+      // Update target position from moving dots every frame
+      const currentStartPos = getCurrentDotPosition(sourceDot);
+      const currentEndPos = getCurrentDotPosition(targetDot);
+      startX = currentStartPos.x;
+      startY = currentStartPos.y;
+      endX = currentEndPos.x;
+      endY = currentEndPos.y;
+
+      dx = endX - startX;
+      dy = endY - startY;
+      distance = Math.hypot(dx, dy);
+      perpX = -dy / distance;
+      perpY = dx / distance;
 
       const easeProgress = easeInOutQuad(progress);
       const wave = Math.sin(easeProgress * Math.PI * waveFrequency) * waveAmplitude * (1 - easeProgress);
@@ -103,8 +137,10 @@ function createParticle(
  */
 function createParticleStream(
   container: HTMLElement,
-  sourceNode: NodePx,
-  targetNode: NodePx,
+  sourceNodeId: string,
+  targetNodeId: string,
+  sourceDot: HTMLElement,
+  targetDot: HTMLElement,
   color: string,
   streamId: string
 ): HTMLElement[] {
@@ -115,8 +151,10 @@ function createParticleStream(
 
     const particle = createParticle(
       container,
-      sourceNode,
-      targetNode,
+      sourceNodeId,
+      targetNodeId,
+      sourceDot,
+      targetDot,
       color,
       streamId,
       index,
@@ -144,7 +182,8 @@ export function startParticleStreams(
   nodeId: string,
   nodesPx: NodePx[],
   threadElements: HTMLElement[],
-  container: HTMLElement
+  container: HTMLElement,
+  dotElements: Map<string, HTMLElement>
 ): void {
   // Stop any existing streams for this node
   stopParticleStreams(nodeId);
@@ -157,23 +196,37 @@ export function startParticleStreams(
   const allParticles: HTMLElement[] = [];
 
   connectedThreads.forEach((thread, idx) => {
-    const fromNode = nodesPx.find((n) => n.id === thread.dataset.from);
-    const toNode = nodesPx.find((n) => n.id === thread.dataset.to);
-    if (!fromNode || !toNode) return;
+    const fromNodeId = thread.dataset.from;
+    const toNodeId = thread.dataset.to;
+    if (!fromNodeId || !toNodeId) return;
+
+    const fromDot = dotElements.get(fromNodeId);
+    const toDot = dotElements.get(toNodeId);
+    if (!fromDot || !toDot) return;
 
     const primaryThread = (thread.dataset.thread || 'questions') as ThreadType;
     const palette = THREAD_PALETTES[primaryThread] || THREAD_PALETTES.questions;
     const color = palette[0];
 
     // Determine direction (particles flow from hovered node)
-    const isFromHovered = thread.dataset.from === nodeId;
-    const sourceNode = isFromHovered ? fromNode : toNode;
-    const targetNode = isFromHovered ? toNode : fromNode;
+    const isFromHovered = fromNodeId === nodeId;
+    const sourceNodeId = isFromHovered ? fromNodeId : toNodeId;
+    const targetNodeId = isFromHovered ? toNodeId : fromNodeId;
+    const sourceDot = isFromHovered ? fromDot : toDot;
+    const targetDot = isFromHovered ? toDot : fromDot;
 
     const streamId = `${nodeId}-${idx}`;
     activeStreams.set(streamId, true);
 
-    const particles = createParticleStream(container, sourceNode, targetNode, color, streamId);
+    const particles = createParticleStream(
+      container,
+      sourceNodeId,
+      targetNodeId,
+      sourceDot,
+      targetDot,
+      color,
+      streamId
+    );
     allParticles.push(...particles);
   });
 

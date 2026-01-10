@@ -6,10 +6,8 @@
 interface DotMotionState {
   nodeId: string;
   dotElement: HTMLElement;
-  originalX: number;
-  originalY: number;
-  offsetX: number;
-  offsetY: number;
+  x: number;                // Absolute X position
+  y: number;                // Absolute Y position
   velocityX: number;
   velocityY: number;
   isPaused: boolean;
@@ -17,10 +15,11 @@ interface DotMotionState {
 
 // Motion configuration
 const MOTION_CONFIG = {
-  MAX_RADIUS: 15,           // Maximum displacement from origin (pixels)
-  STEP_SIZE: 0.02,          // Size of each random step
-  DIRECTION_CHANGE_RATE: 0.98, // Probability of continuing in same direction (0-1)
-  BASE_SPEED: 0.15,         // Base movement speed (pixels per frame)
+  STEP_SIZE: 0.005,         // Size of each random step (reduced for smoothness)
+  DIRECTION_CHANGE_RATE: 0.995, // Probability of continuing in same direction (0-1)
+  BASE_SPEED: 0.08,         // Base movement speed (pixels per frame)
+  FOOTER_CLEARANCE: 320,    // Keep dots this many pixels from bottom (footer height)
+  EDGE_PADDING: 20,         // Padding from viewport edges (pixels)
 };
 
 // Global state
@@ -38,29 +37,19 @@ function gaussianRandom(): number {
 }
 
 /**
- * Reflect velocity when hitting boundary (elastic collision)
+ * Get viewport boundaries for dot movement
  */
-function reflectAtBoundary(
-  offsetX: number,
-  offsetY: number,
-  velocityX: number,
-  velocityY: number,
-  radius: number
-): { vx: number; vy: number } {
-  const dist = Math.hypot(offsetX, offsetY);
-  if (dist > radius) {
-    // Normalize position to boundary
-    const nx = offsetX / dist;
-    const ny = offsetY / dist;
+function getViewportBounds(): { minX: number; maxX: number; minY: number; maxY: number } {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const maxBottomY = viewportHeight - MOTION_CONFIG.FOOTER_CLEARANCE;
 
-    // Reflect velocity vector across boundary normal
-    const dot = velocityX * nx + velocityY * ny;
-    return {
-      vx: velocityX - 2 * dot * nx,
-      vy: velocityY - 2 * dot * ny,
-    };
-  }
-  return { vx: velocityX, vy: velocityY };
+  return {
+    minX: MOTION_CONFIG.EDGE_PADDING,
+    maxX: viewportWidth - MOTION_CONFIG.EDGE_PADDING,
+    minY: MOTION_CONFIG.EDGE_PADDING,
+    maxY: maxBottomY - MOTION_CONFIG.EDGE_PADDING,
+  };
 }
 
 /**
@@ -68,6 +57,7 @@ function reflectAtBoundary(
  */
 function updateMotion(): void {
   let hasActiveDots = false;
+  const bounds = getViewportBounds();
 
   dotMotions.forEach((state) => {
     // Skip if paused (either individually or globally)
@@ -91,33 +81,30 @@ function updateMotion(): void {
     state.velocityX += gaussianRandom() * MOTION_CONFIG.STEP_SIZE;
     state.velocityY += gaussianRandom() * MOTION_CONFIG.STEP_SIZE;
 
-    // Update position offset
-    state.offsetX += state.velocityX;
-    state.offsetY += state.velocityY;
+    // Update position
+    state.x += state.velocityX;
+    state.y += state.velocityY;
 
-    // Check boundary collision and reflect
-    const dist = Math.hypot(state.offsetX, state.offsetY);
-    if (dist > MOTION_CONFIG.MAX_RADIUS) {
-      // Clamp position to boundary
-      const scale = MOTION_CONFIG.MAX_RADIUS / dist;
-      state.offsetX *= scale;
-      state.offsetY *= scale;
+    // Check viewport boundaries and reflect
+    if (state.x < bounds.minX) {
+      state.x = bounds.minX;
+      state.velocityX = Math.abs(state.velocityX); // Bounce right
+    } else if (state.x > bounds.maxX) {
+      state.x = bounds.maxX;
+      state.velocityX = -Math.abs(state.velocityX); // Bounce left
+    }
 
-      // Reflect velocity
-      const reflected = reflectAtBoundary(
-        state.offsetX,
-        state.offsetY,
-        state.velocityX,
-        state.velocityY,
-        MOTION_CONFIG.MAX_RADIUS
-      );
-      state.velocityX = reflected.vx;
-      state.velocityY = reflected.vy;
+    if (state.y < bounds.minY) {
+      state.y = bounds.minY;
+      state.velocityY = Math.abs(state.velocityY); // Bounce down
+    } else if (state.y > bounds.maxY) {
+      state.y = bounds.maxY;
+      state.velocityY = -Math.abs(state.velocityY); // Bounce up
     }
 
     // Apply to DOM
-    state.dotElement.style.left = `${state.originalX + state.offsetX}px`;
-    state.dotElement.style.top = `${state.originalY + state.offsetY}px`;
+    state.dotElement.style.left = `${state.x}px`;
+    state.dotElement.style.top = `${state.y}px`;
   });
 
   // Continue animation loop if any dots are active
@@ -137,8 +124,9 @@ export function initBrownianMotion(dotElements: Map<string, HTMLElement>): void 
 
   // Initialize state for each dot
   dotElements.forEach((dotElement, nodeId) => {
-    const origLeft = parseFloat(dotElement.dataset.origLeft || '0');
-    const origTop = parseFloat(dotElement.dataset.origTop || '0');
+    // Get current position from DOM
+    const currentLeft = parseFloat(dotElement.style.left || '0');
+    const currentTop = parseFloat(dotElement.style.top || '0');
 
     // Start with random direction
     const angle = Math.random() * 2 * Math.PI;
@@ -147,10 +135,8 @@ export function initBrownianMotion(dotElements: Map<string, HTMLElement>): void 
     dotMotions.set(nodeId, {
       nodeId,
       dotElement,
-      originalX: origLeft,
-      originalY: origTop,
-      offsetX: 0,
-      offsetY: 0,
+      x: currentLeft,
+      y: currentTop,
       velocityX: Math.cos(angle) * speed,
       velocityY: Math.sin(angle) * speed,
       isPaused: false,

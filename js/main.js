@@ -80,8 +80,90 @@ function focusEssay(nodeId) {
 function closeEssay() {
   exitContainer();
 }
+var fadeAnimationId = null;
+var fadeStartTime = null;
+var fadeStartOpacity = 0;
+var isLogoHovered = false;
+var isHeaderHovered = false;
+var FADE_DURATION = 1e4;
+var CLICKABLE_THRESHOLD = 0.01;
+function updatePointerEvents(link, opacity) {
+  link.style.pointerEvents = opacity > CLICKABLE_THRESHOLD ? "auto" : "none";
+}
+function animateLogoFade(link, startOpacity) {
+  fadeStartTime = performance.now();
+  fadeStartOpacity = startOpacity;
+  function animate(currentTime) {
+    if (!fadeStartTime)
+      return;
+    if (isLogoHovered || isHeaderHovered) {
+      fadeAnimationId = null;
+      return;
+    }
+    const elapsed = currentTime - fadeStartTime;
+    const progress = Math.min(elapsed / FADE_DURATION, 1);
+    const currentOpacity = fadeStartOpacity * (1 - progress);
+    link.style.opacity = String(currentOpacity);
+    updatePointerEvents(link, currentOpacity);
+    if (progress < 1) {
+      fadeAnimationId = requestAnimationFrame(animate);
+    } else {
+      fadeAnimationId = null;
+      link.style.pointerEvents = "none";
+    }
+  }
+  if (fadeAnimationId !== null) {
+    cancelAnimationFrame(fadeAnimationId);
+  }
+  fadeAnimationId = requestAnimationFrame(animate);
+}
+function getCurrentOpacity(element) {
+  const opacity = window.getComputedStyle(element).opacity;
+  return parseFloat(opacity) || 0;
+}
+function initConstellationLogo() {
+  const header = document.querySelector(".site-header");
+  const constellationLink = getById("constellation-link");
+  if (!header || !constellationLink)
+    return;
+  header.addEventListener("mouseenter", () => {
+    isHeaderHovered = true;
+    if (fadeAnimationId !== null) {
+      cancelAnimationFrame(fadeAnimationId);
+      fadeAnimationId = null;
+    }
+    constellationLink.style.opacity = "1";
+    constellationLink.style.pointerEvents = "auto";
+  });
+  header.addEventListener("mouseleave", () => {
+    isHeaderHovered = false;
+    if (isLogoHovered)
+      return;
+    const currentOpacity = getCurrentOpacity(constellationLink);
+    animateLogoFade(constellationLink, currentOpacity);
+  });
+  constellationLink.addEventListener("mouseenter", (e) => {
+    const currentOpacity = getCurrentOpacity(constellationLink);
+    if (currentOpacity < CLICKABLE_THRESHOLD)
+      return;
+    isLogoHovered = true;
+    if (fadeAnimationId !== null) {
+      cancelAnimationFrame(fadeAnimationId);
+      fadeAnimationId = null;
+    }
+    constellationLink.style.opacity = "1";
+    constellationLink.style.pointerEvents = "auto";
+  });
+  constellationLink.addEventListener("mouseleave", () => {
+    isLogoHovered = false;
+    if (isHeaderHovered)
+      return;
+    animateLogoFade(constellationLink, 1);
+  });
+}
 initTheme();
 initNav();
+initConstellationLogo();
 if (yearEl) {
   yearEl.textContent = String(new Date().getFullYear());
 }

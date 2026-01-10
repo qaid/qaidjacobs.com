@@ -187,11 +187,61 @@ html[data-theme="dark"] .nav-panel {
   z-index: 1;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition);
+  transition: opacity 10000ms ease;
 }
 
 .site-header:hover ~ main .site-footer {
   opacity: 1;
+  transition: opacity 1000ms ease;
+}
+
+/* Constellation Design logo in footer */
+.constellation-link {
+  display: block;
+  margin: 0 auto var(--space-4);
+  width: fit-content;
+  opacity: 0;
+  transition: opacity 1000ms ease;
+  pointer-events: none;
+  text-decoration: none;
+}
+
+.constellation-logo {
+  display: block;
+  width: 240px;
+  height: auto;
+  margin: 0 auto;
+  pointer-events: none; /* Images don't intercept hover events */
+}
+
+/* Theme-specific logo visibility */
+.constellation-logo-light {
+  display: block;
+}
+
+.constellation-logo-dark {
+  display: none;
+}
+
+html[data-theme="dark"] .constellation-logo-light {
+  display: none;
+}
+
+html[data-theme="dark"] .constellation-logo-dark {
+  display: block;
+}
+
+/* Show logo on header hover */
+.site-header:hover ~ main .site-footer .constellation-link {
+  opacity: 1;
+  transition: opacity 1000ms ease;
+  pointer-events: auto;
+}
+
+/* Logo hover: show at full opacity with smooth transition */
+.constellation-link:hover {
+  opacity: 1 !important;
+  transition: opacity 180ms ease !important;
 }
 
 .container-block {
