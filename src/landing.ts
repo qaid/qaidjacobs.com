@@ -409,8 +409,9 @@ function handleNodeHoverEnter(node: NodePx): void {
   if (!webEl) return;
   const nodesPx = getCurrentNodesPx();
   const threadElements = getThreadElements();
+  const dotElements = getDotElements();
   pauseMotion(node.id);
-  startParticleStreams(node.id, nodesPx, threadElements, webEl);
+  startParticleStreams(node.id, nodesPx, threadElements, webEl, dotElements);
 
   // Bio node: show bio text in phrase area
   if (node.type === 'bio') {
