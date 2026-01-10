@@ -10,7 +10,10 @@
     "predev": "npm run build",
     "dev": "bunx serve . --listen 3000",
     "build": "npm run generate-manifest && npm run build:ts",
-    "lint": "npm run typecheck"
+    "lint": "npm run typecheck",
+    "cms:dev": "bun run cms/server/index.ts",
+    "cms:start": "bun run cms/server/index.ts",
+    "dev:all": "bun run dev & bun run cms:dev"
   },
   "engines": {
     "bun": ">=1.0.0"
