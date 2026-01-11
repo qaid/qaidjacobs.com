@@ -1,0 +1,32 @@
+{
+  "id": "basketball",
+  "title": "This sport continues to weave in and out of my life...",
+  "central": "🏀 basketball",
+  "connected": [
+    {
+      "label": "community",
+      "linksTo": null
+    },
+    {
+      "label": "health",
+      "linksTo": null
+    },
+    {
+      "label": "personal growth",
+      "linksTo": null
+    },
+    {
+      "label": "death",
+      "linksTo": null
+    },
+    {
+      "label": "friendship",
+      "linksTo": null
+    }
+  ],
+  "threads": [
+    "music",
+    "movement"
+  ],
+  "visible_on_landing": true
+}

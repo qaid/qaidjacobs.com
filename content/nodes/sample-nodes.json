@@ -13,17 +13,32 @@
     "is_hub": true
   },
   {
-    "id": "beat-sketch",
-    "title": "Beat",
-    "type": "music",
-    "subtype": "sketch",
+    "id": "alterconf-2017",
+    "title": "Started from the Margins now we here",
+    "type": "durational",
+    "threads": [
+      "questions"
+    ],
+    "visible_on_landing": true,
+    "x": 23,
+    "y": 63,
+    "description": "This presentation given at [AlterConf London 2017](https://www.alterconf.com/conferences/2017/london-england). In the tech and digital goods industry, successful products are often those made to be consumed by many, various people. How do we creators know what various people want? Empathy, that's how. This reality makes the skill of empathy powerful and sought after. In fact, EMPATHY is a superpower. Who has empathy in spades? Marginalized folks, that's who! Unable to celebrate our empathy advantage, most of us who are excluded from resources and opportunity have been forced to be empathetic in order to avoid being ostracized, impoverished, assaulted, or killed by those in positions of power. In this talk I explore the buzzword EMPATHY, and examine modern social structures that force the marginalized to be empathetic or die. Within this lens I will refocus a light on the way we can leverage our highly performing powers of empathy to combat those forces of marginalization responsible for the reluctant and conditional advantage of being disadvantaged.",
+    "subtype": "performance"
+  },
+  {
+    "id": "basketball",
+    "title": "This sport continues to weave in and out of my life...",
+    "type": "curiosity",
     "threads": [
       "music",
       "movement"
     ],
     "visible_on_landing": true,
-    "x": 18,
-    "y": 62
+    "x": 75,
+    "y": 25,
+    "description": "",
+    "subtype": "map",
+    "is_hub": true
   },
   {
     "id": "bio",
@@ -33,8 +48,8 @@
       "questions"
     ],
     "visible_on_landing": true,
-    "x": 78,
-    "y": 22,
+    "x": 50,
+    "y": 88,
     "bioText": "In short, I'm Qa'id: father, designer, DJ, tinkerer, always in motion between places and questions."
   },
   {

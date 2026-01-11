@@ -1,0 +1,15 @@
+{
+  "id": "basketball",
+  "title": "This sport continues to weave in and out of my life...",
+  "type": "curiosity",
+  "threads": [
+    "music",
+    "movement"
+  ],
+  "visible_on_landing": true,
+  "x": 75,
+  "y": 25,
+  "description": "",
+  "subtype": "map",
+  "is_hub": true
+}
