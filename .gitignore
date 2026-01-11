@@ -6,6 +6,7 @@ bun.lockb
 cms/dist
 cms/.cache
 cms/node_modules
+.cms-backups/
 
 # system files
 .DS_Store
