@@ -156,8 +156,8 @@ export function validateDurationalData(data: Partial<DurationalData>): Validatio
     errors.push('Type must be "durational"');
   }
 
-  if (data.subtype && !['dj-mix', 'talk', 'podcast'].includes(data.subtype)) {
-    errors.push('Invalid subtype (must be dj-mix, talk, or podcast)');
+  if (data.subtype && !['dj-mix', 'talk', 'podcast', 'presentation'].includes(data.subtype)) {
+    errors.push('Invalid subtype (must be dj-mix, talk, podcast, or presentation)');
   }
 
   if (!data.media) {

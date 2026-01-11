@@ -55,8 +55,8 @@ export interface CuriosityData {
   visible_on_landing?: boolean;
 }
 
-// Durational content data (DJ mixes, talks, podcasts)
-export type DurationalSubtype = 'dj-mix' | 'talk' | 'podcast';
+// Durational content data (DJ mixes, talks, podcasts, presentations)
+export type DurationalSubtype = 'dj-mix' | 'talk' | 'podcast' | 'presentation';
 export type MediaSource = 'soundcloud' | 'mixcloud' | 'youtube' | 'vimeo';
 
 export interface DurationalMedia {
