@@ -8,8 +8,8 @@
       "questions"
     ],
     "visible_on_landing": true,
-    "x": 53,
-    "y": 40,
+    "x": 55,
+    "y": 71,
     "is_hub": true
   },
   {
@@ -20,8 +20,8 @@
       "questions"
     ],
     "visible_on_landing": true,
-    "x": 18,
-    "y": 35,
+    "x": 44,
+    "y": 32,
     "description": "This presentation given at [AlterConf London 2017](https://www.alterconf.com/conferences/2017/london-england). In the tech and digital goods industry, successful products are often those made to be consumed by many, various people. How do we creators know what various people want? Empathy, that's how. This reality makes the skill of empathy powerful and sought after. In fact, EMPATHY is a superpower. Who has empathy in spades? Marginalized folks, that's who! Unable to celebrate our empathy advantage, most of us who are excluded from resources and opportunity have been forced to be empathetic in order to avoid being ostracized, impoverished, assaulted, or killed by those in positions of power. In this talk I explore the buzzword EMPATHY, and examine modern social structures that force the marginalized to be empathetic or die. Within this lens I will refocus a light on the way we can leverage our highly performing powers of empathy to combat those forces of marginalization responsible for the reluctant and conditional advantage of being disadvantaged.",
     "subtype": "performance"
   },
@@ -34,8 +34,8 @@
       "movement"
     ],
     "visible_on_landing": true,
-    "x": 76,
-    "y": 39,
+    "x": 81,
+    "y": 51,
     "description": "",
     "subtype": "map",
     "is_hub": true
@@ -48,8 +48,8 @@
       "questions"
     ],
     "visible_on_landing": true,
-    "x": 72,
-    "y": 23,
+    "x": 24,
+    "y": 32,
     "bioText": "In short, I'm Qa'id: father, designer, DJ, tinkerer, always in motion between places and questions."
   },
   {
@@ -60,8 +60,8 @@
       "questions"
     ],
     "visible_on_landing": true,
-    "x": 63,
-    "y": 15,
+    "x": 60,
+    "y": 59,
     "description": "HBO has produced a movie adaptation of the theatrical adaptation of the amazing work from Ta-Nehisi Coates, Between the World and Me. To support the movie and explore the themes presented in the the book and the movie, the teams at SpokeMedia and Domino Sound have produced an official podcast companion to the movie. My son Sekani is featured in the opening, and then he and I team up towards the end of the episode (48:19) when I read a personal letter to him.",
     "subtype": "podcast",
     "created": "2020-11-22"
@@ -75,8 +75,8 @@
       "music"
     ],
     "visible_on_landing": true,
-    "x": 39,
-    "y": 37
+    "x": 79,
+    "y": 45
   },
   {
     "id": "sunday-morning-church-with-doc",
@@ -90,7 +90,7 @@
     "essayFile": "sunday-morning-church-with-doc.md",
     "created": "2016-01-25",
     "visible_on_landing": true,
-    "x": 76,
-    "y": 28
+    "x": 81,
+    "y": 37
   }
 ]
