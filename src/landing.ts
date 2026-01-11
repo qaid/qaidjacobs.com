@@ -464,7 +464,7 @@ async function initLanding(): Promise<void> {
     // Load data
     const [phrasesData, nodesData, threadsData] = await Promise.all([
       loadJSON<Phrase[]>('content/phrases.json'),
-      loadJSON<Node[]>('content/nodes/sample-nodes.json'),
+      loadJSON<Node[]>('content/nodes/landing-nodes.json'),
       loadJSON<Thread[]>('content/connections.json'),
     ]);
 

@@ -1008,7 +1008,7 @@ async function initLanding() {
   try {
     const [phrasesData, nodesData, threadsData] = await Promise.all([
       loadJSON("content/phrases.json"),
-      loadJSON("content/nodes/sample-nodes.json"),
+      loadJSON("content/nodes/landing-nodes.json"),
       loadJSON("content/connections.json")
     ]);
     set("phrases", phrasesData);
