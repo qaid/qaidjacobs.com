@@ -224,7 +224,7 @@ function renderContentList() {
       <div class="content-card-meta">
         ${node.description || ''}
         <br>
-        Position: (${node.x}, ${node.y}) | Threads: ${node.threads.join(', ')}
+        Position: Auto-assigned | Threads: ${node.threads.join(', ')}
       </div>
     </div>
   `).join('');
@@ -469,15 +469,13 @@ async function showEditForm(node, essayContent = '') {
   `;
 
   const positionFields = `
-    <div class="form-row">
-      <div class="form-group">
-        <label for="node-x">X Position (0-100)</label>
-        <input type="number" id="node-x" min="0" max="100" value="${node.x || 50}">
-      </div>
-      <div class="form-group">
-        <label for="node-y">Y Position (0-100)</label>
-        <input type="number" id="node-y" min="0" max="100" value="${node.y || 50}">
-      </div>
+    <div class="form-group">
+      <label>Position</label>
+      <p style="color: #666; font-size: 0.9em; font-style: italic; margin: 0.5rem 0;">
+        Positions are automatically randomized during build. No manual input needed.
+      </p>
+      <input type="hidden" id="node-x" value="50">
+      <input type="hidden" id="node-y" value="50">
     </div>
 
     <div class="form-group">

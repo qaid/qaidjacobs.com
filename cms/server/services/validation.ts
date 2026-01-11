@@ -44,17 +44,21 @@ export function validateNode(node: Partial<Node>): ValidationResult {
     }
   }
 
-  // Coordinates validation
-  if (typeof node.x !== 'number') {
-    errors.push('X coordinate must be a number');
-  } else if (node.x < 0 || node.x > 100) {
-    errors.push('X coordinate must be between 0 and 100');
+  // Coordinates validation (OPTIONAL)
+  if (node.x !== undefined) {
+    if (typeof node.x !== 'number') {
+      errors.push('X coordinate must be a number');
+    } else if (node.x < 0 || node.x > 100) {
+      errors.push('X coordinate must be between 0 and 100');
+    }
   }
 
-  if (typeof node.y !== 'number') {
-    errors.push('Y coordinate must be a number');
-  } else if (node.y < 0 || node.y > 100) {
-    errors.push('Y coordinate must be between 0 and 100');
+  if (node.y !== undefined) {
+    if (typeof node.y !== 'number') {
+      errors.push('Y coordinate must be a number');
+    } else if (node.y < 0 || node.y > 100) {
+      errors.push('Y coordinate must be between 0 and 100');
+    }
   }
 
   // visible_on_landing validation
