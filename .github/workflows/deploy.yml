@@ -35,7 +35,7 @@ jobs:
       - name: Create deployment directory
         run: |
           mkdir -p _site
-          cp -r index.html css js assets content CNAME .nojekyll _site/ rm -rf _site/.cms-backups 2>/dev/null || true
+          cp -r index.html css js assets content CNAME .nojekyll _site/
           # Copy README and LICENSE if they exist
           [ -f README.md ] && cp README.md _site/ || true
           [ -f LICENSE ] && cp LICENSE _site/ || true
