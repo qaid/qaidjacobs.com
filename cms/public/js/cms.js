@@ -596,6 +596,9 @@ async function showEditForm(node, essayContent = '') {
           <option value="dj-mix" ${node.subtype === 'dj-mix' ? 'selected' : ''}>DJ Mix</option>
           <option value="piece" ${node.subtype === 'piece' ? 'selected' : ''}>Piece</option>
           <option value="performance" ${node.subtype === 'performance' ? 'selected' : ''}>Performance</option>
+          <option value="talk" ${node.subtype === 'talk' ? 'selected' : ''}>Talk</option>
+          <option value="presentation" ${node.subtype === 'presentation' ? 'selected' : ''}>Presentation</option>
+          <option value="podcast" ${node.subtype === 'podcast' ? 'selected' : ''}>Podcast</option>
         </select>
       </div>
 
