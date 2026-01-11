@@ -12,25 +12,12 @@ const PROJECT_ROOT = resolve(process.cwd());
 const OUTPUT_FILE = join(PROJECT_ROOT, 'content/nodes/landing-nodes.json');
 
 /**
- * Generate hash from string for consistent positioning
+ * Randomize position for node
  */
-function hashString(str: string): number {
-  return str.split('').reduce((acc, char) => {
-    return acc + char.charCodeAt(0);
-  }, 0);
-}
-
-/**
- * Auto-assign position based on node ID hash
- */
-function autoAssignPosition(node: Node): Node {
-  if (typeof node.x === 'number' && typeof node.y === 'number') {
-    return node; // Already has position
-  }
-
-  const hash = hashString(node.id);
-  const x = ((hash * 37) % 70) + 15; // 15-85 range
-  const y = ((hash * 73) % 60) + 20; // 20-80 range
+function randomizePosition(node: Node): Node {
+  // ALWAYS assign new random position (ignore existing)
+  const x = Math.floor(Math.random() * 80) + 10; // 10-90 range
+  const y = Math.floor(Math.random() * 60) + 15; // 15-75 range
 
   return {
     ...node,
@@ -69,8 +56,8 @@ export async function regenerateManifest(): Promise<Node[]> {
           continue;
         }
 
-        // Auto-assign position if needed
-        const nodeWithPosition = autoAssignPosition(node);
+        // Randomize position
+        const nodeWithPosition = randomizePosition(node);
 
         // Ensure visible_on_landing defaults to true
         if (typeof nodeWithPosition.visible_on_landing !== 'boolean') {

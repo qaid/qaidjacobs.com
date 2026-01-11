@@ -45,18 +45,11 @@ async function generateManifest() {
           continue;
         }
 
-        // Auto-assign position if not specified
-        if (typeof node.x !== 'number' || typeof node.y !== 'number') {
-          // Simple distribution: use hash of ID to generate consistent positions
-          const hash = node.id.split('').reduce((acc, char) => {
-            return acc + char.charCodeAt(0);
-          }, 0);
+        // ALWAYS randomize position (override existing values)
+        node.x = Math.floor(Math.random() * 80) + 10; // 10-90 range
+        node.y = Math.floor(Math.random() * 60) + 15; // 15-75 range
 
-          node.x = ((hash * 37) % 70) + 15; // 15-85 range
-          node.y = ((hash * 73) % 60) + 20; // 20-80 range
-
-          console.log(`   ℹ️  ${file}: Auto-assigned position (${node.x}, ${node.y})`);
-        }
+        console.log(`   🎲 ${file}: Randomized position (${node.x}, ${node.y})`);
 
         // Ensure visible_on_landing defaults to true
         if (typeof node.visible_on_landing !== 'boolean') {
