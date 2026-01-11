@@ -160,7 +160,7 @@ async function handleAPIRoute(req: Request, url: URL): Promise<Response> {
 
     if (pathname === '/api/phrases' && method === 'POST') {
       const body = await req.json();
-      const result = await addPhrase(body);
+      const result = await addPhrase(body.phrase);
       return new Response(JSON.stringify(result), { headers: corsHeaders });
     }
 
@@ -184,7 +184,7 @@ async function handleAPIRoute(req: Request, url: URL): Promise<Response> {
 
     if (pathname === '/api/connections' && method === 'POST') {
       const body = await req.json();
-      const result = await addConnection(body);
+      const result = await addConnection(body.connection);
       return new Response(JSON.stringify(result), { headers: corsHeaders });
     }
 
