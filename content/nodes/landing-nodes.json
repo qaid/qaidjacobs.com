@@ -8,8 +8,8 @@
       "questions"
     ],
     "visible_on_landing": true,
-    "x": 74,
-    "y": 55,
+    "x": 79,
+    "y": 74,
     "is_hub": true
   },
   {
@@ -20,8 +20,8 @@
       "questions"
     ],
     "visible_on_landing": true,
-    "x": 23,
-    "y": 63,
+    "x": 24,
+    "y": 19,
     "description": "This presentation given at [AlterConf London 2017](https://www.alterconf.com/conferences/2017/london-england). In the tech and digital goods industry, successful products are often those made to be consumed by many, various people. How do we creators know what various people want? Empathy, that's how. This reality makes the skill of empathy powerful and sought after. In fact, EMPATHY is a superpower. Who has empathy in spades? Marginalized folks, that's who! Unable to celebrate our empathy advantage, most of us who are excluded from resources and opportunity have been forced to be empathetic in order to avoid being ostracized, impoverished, assaulted, or killed by those in positions of power. In this talk I explore the buzzword EMPATHY, and examine modern social structures that force the marginalized to be empathetic or die. Within this lens I will refocus a light on the way we can leverage our highly performing powers of empathy to combat those forces of marginalization responsible for the reluctant and conditional advantage of being disadvantaged.",
     "subtype": "performance"
   },
@@ -34,8 +34,8 @@
       "movement"
     ],
     "visible_on_landing": true,
-    "x": 75,
-    "y": 25,
+    "x": 32,
+    "y": 41,
     "description": "",
     "subtype": "map",
     "is_hub": true
@@ -48,9 +48,23 @@
       "questions"
     ],
     "visible_on_landing": true,
-    "x": 50,
-    "y": 88,
+    "x": 67,
+    "y": 71,
     "bioText": "In short, I'm Qa'id: father, designer, DJ, tinkerer, always in motion between places and questions."
+  },
+  {
+    "id": "hbo-between-the-world-and-me-podcast",
+    "title": "HBO’s Between The World And Me Podcast: Episode 1",
+    "type": "durational",
+    "threads": [
+      "questions"
+    ],
+    "visible_on_landing": true,
+    "x": 59,
+    "y": 66,
+    "description": "HBO has produced a movie adaptation of the theatrical adaptation of the amazing work from Ta-Nehisi Coates, Between the World and Me. To support the movie and explore the themes presented in the the book and the movie, the teams at SpokeMedia and Domino Sound have produced an official podcast companion to the movie. My son Sekani is featured in the opening, and then he and I team up towards the end of the episode (48:19) when I read a personal letter to him.",
+    "subtype": "podcast",
+    "created": "2020-11-22"
   },
   {
     "id": "mix-2019",
@@ -61,8 +75,8 @@
       "music"
     ],
     "visible_on_landing": true,
-    "x": 22,
-    "y": 28
+    "x": 61,
+    "y": 29
   },
   {
     "id": "sunday-morning-church-with-doc",
@@ -76,7 +90,7 @@
     "essayFile": "sunday-morning-church-with-doc.md",
     "created": "2016-01-25",
     "visible_on_landing": true,
-    "x": 45,
-    "y": 60
+    "x": 22,
+    "y": 47
   }
 ]
