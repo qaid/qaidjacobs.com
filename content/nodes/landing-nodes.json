@@ -53,18 +53,6 @@
     "bioText": "In short, I'm Qa'id: father, designer, DJ, tinkerer, always in motion between places and questions."
   },
   {
-    "id": "durational",
-    "title": "Durational",
-    "type": "movement",
-    "subtype": "piece",
-    "threads": [
-      "movement"
-    ],
-    "visible_on_landing": true,
-    "x": 52,
-    "y": 72
-  },
-  {
     "id": "mix-2019",
     "title": "Mortgage Music - Early 90's House Mix",
     "type": "durational",

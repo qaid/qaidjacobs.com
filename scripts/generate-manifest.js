@@ -2,15 +2,15 @@
 
 /**
  * Generate nodes manifest from individual node JSON files
- * This script scans content/nodes/ for all .json files (except sample-nodes.json)
- * and generates a consolidated sample-nodes.json manifest
+ * This script scans content/nodes/ for all .json files (except landing-nodes.json)
+ * and generates a consolidated landing-nodes.json manifest
  */
 
 import { readdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 
 const NODES_DIR = 'content/nodes';
-const OUTPUT_FILE = 'content/nodes/sample-nodes.json';
+const NODES_FILE = 'content/nodes/landing-nodes.json';
 
 async function generateManifest() {
   console.log('📦 Generating nodes manifest...');
@@ -22,7 +22,7 @@ async function generateManifest() {
 
     // Filter for JSON files (excluding the output manifest itself)
     const nodeFiles = files.filter(
-      file => file.endsWith('.json') && file !== 'sample-nodes.json'
+      file => file.endsWith('.json') && file !== 'landing-nodes.json'
     );
 
     console.log(`   Found ${nodeFiles.length} node file(s)`);
@@ -79,10 +79,10 @@ async function generateManifest() {
     });
 
     // Write consolidated manifest
-    await writeFile(OUTPUT_FILE, JSON.stringify(nodes, null, 2) + '\n');
+    await writeFile(NODES_FILE, JSON.stringify(nodes, null, 2) + '\n');
 
     console.log(`✅ Generated manifest with ${nodes.length} node(s)`);
-    console.log(`   Output: ${OUTPUT_FILE}`);
+    console.log(`   Output: ${NODES_FILE}`);
 
   } catch (error) {
     console.error('❌ Failed to generate manifest:', error.message);

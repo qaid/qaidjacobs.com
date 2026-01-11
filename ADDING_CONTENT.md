@@ -178,7 +178,7 @@ Set `"is_hub": true` for central topic nodes that branch to multiple related con
 3. Run `npm run dev` (auto-generates manifest)
 4. View your content in the browser
 
-The manifest generation happens automatically before the dev server starts, so you never need to manually edit `sample-nodes.json`.
+The manifest generation happens automatically before the dev server starts, so you never need to manually edit `landing-nodes.json`.
 
 **The system treats all content types equally** - essays, music, movement, and curiosity nodes all appear on the landing page and are discovered automatically.
 

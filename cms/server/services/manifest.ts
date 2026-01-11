@@ -1,6 +1,6 @@
 /**
  * Manifest Service
- * Generates consolidated sample-nodes.json from individual node files
+ * Generates consolidated landing-nodes.json from individual node files
  * Ported from scripts/generate-manifest.js
  */
 
@@ -9,7 +9,7 @@ import type { Node } from '../types';
 import { listNodeFiles, readNodeFile } from './file-service';
 
 const PROJECT_ROOT = resolve(process.cwd());
-const OUTPUT_FILE = join(PROJECT_ROOT, 'content/nodes/sample-nodes.json');
+const OUTPUT_FILE = join(PROJECT_ROOT, 'content/nodes/landing-nodes.json');
 
 /**
  * Generate hash from string for consistent positioning

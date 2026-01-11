@@ -125,7 +125,7 @@ export async function deleteNodeFile(id: string): Promise<BackupInfo> {
 export async function listNodeFiles(): Promise<string[]> {
   const fs = await import('fs/promises');
   const files = await fs.readdir(NODES_DIR);
-  return files.filter((f) => f.endsWith('.json') && f !== 'sample-nodes.json');
+  return files.filter((f) => f.endsWith('.json') && f !== 'landing-nodes.json');
 }
 
 // Essay operations
