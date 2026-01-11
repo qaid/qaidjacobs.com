@@ -2,9 +2,11 @@
   "id": "bio",
   "title": "About",
   "type": "bio",
-  "threads": ["questions"],
+  "threads": [
+    "questions"
+  ],
   "visible_on_landing": true,
   "x": 50,
-  "y": 88,
-  "bioText": "In short, I'm Qa'id: father, designer, DJ, tinkerer, always in motion between places and questions."
+  "y": 50,
+  "bioText": "In short, I'm Qa'id:\nA father, designer, DJ, tinkerer.\nAlways in motion between places and questions."
 }
