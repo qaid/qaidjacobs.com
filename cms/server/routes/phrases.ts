@@ -6,6 +6,7 @@
 import type { Phrase, ApiResponse } from '../types';
 import { readPhrases, writePhrases } from '../services/file-service';
 import { validatePhrase } from '../services/validation';
+import { commitContentChanges } from '../services/git-service';
 
 /**
  * GET /api/phrases - Get all phrases
@@ -43,6 +44,10 @@ export async function updatePhrases(phrases: Phrase[]): Promise<ApiResponse<Phra
     }
 
     await writePhrases(phrases);
+
+    // Commit changes to git
+    await commitContentChanges('update', 'phrases', `${phrases.length} phrases`);
+
     return {
       success: true,
       data: phrases,
@@ -74,6 +79,10 @@ export async function addPhrase(phrase: Phrase): Promise<ApiResponse<Phrase[]>> 
     phrases.push(phrase);
     await writePhrases(phrases);
 
+    // Commit changes to git
+    const phraseText = phrase.text.substring(0, 50) + (phrase.text.length > 50 ? '...' : '');
+    await commitContentChanges('create', 'phrase', phraseText);
+
     return {
       success: true,
       data: phrases,
@@ -102,8 +111,13 @@ export async function deletePhrase(index: number): Promise<ApiResponse<Phrase[]>
       };
     }
 
+    const deletedPhrase = phrases[index];
     phrases.splice(index, 1);
     await writePhrases(phrases);
+
+    // Commit changes to git
+    const phraseText = deletedPhrase.text.substring(0, 50) + (deletedPhrase.text.length > 50 ? '...' : '');
+    await commitContentChanges('delete', 'phrase', phraseText);
 
     return {
       success: true,

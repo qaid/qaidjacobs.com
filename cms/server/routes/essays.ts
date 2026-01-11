@@ -5,6 +5,7 @@
 
 import type { ApiResponse } from '../types';
 import { readEssayFile, writeEssayFile } from '../services/file-service';
+import { commitContentChanges } from '../services/git-service';
 
 /**
  * GET /api/essays/:file - Get essay content
@@ -31,6 +32,12 @@ export async function getEssay(essayFile: string): Promise<ApiResponse<string>> 
 export async function updateEssay(essayFile: string, content: string): Promise<ApiResponse<null>> {
   try {
     await writeEssayFile(essayFile, content);
+
+    // Commit changes to git
+    // Use essay filename (without .md) as title since we don't have node context here
+    const title = essayFile.replace('.md', '');
+    await commitContentChanges('update', 'essay', title);
+
     return {
       success: true,
       message: 'Essay updated successfully',

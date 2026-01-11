@@ -20,6 +20,7 @@ import {
 } from '../services/file-service';
 import { validateNode } from '../services/validation';
 import { regenerateManifest } from '../services/manifest';
+import { commitContentChanges } from '../services/git-service';
 
 /**
  * GET /api/nodes - List all nodes
@@ -138,6 +139,9 @@ export async function createNode(request: CreateNodeRequest): Promise<ApiRespons
     // Regenerate manifest
     const manifest = await regenerateManifest();
 
+    // Commit changes to git
+    await commitContentChanges('create', node.type, node.title, node.subtype);
+
     return {
       success: true,
       data: { node, manifest },
@@ -217,6 +221,9 @@ export async function updateNode(id: string, request: UpdateNodeRequest): Promis
     // Regenerate manifest
     const manifest = await regenerateManifest();
 
+    // Commit changes to git
+    await commitContentChanges('update', node.type, node.title, node.subtype);
+
     return {
       success: true,
       data: { node, manifest },
@@ -274,6 +281,9 @@ export async function deleteNode(id: string): Promise<ApiResponse<{ manifest: No
 
     // Regenerate manifest
     const manifest = await regenerateManifest();
+
+    // Commit changes to git
+    await commitContentChanges('delete', node.type, node.title);
 
     return {
       success: true,
