@@ -222,8 +222,7 @@ function renderContentList() {
         <span class="type-badge">${node.type}</span>
       </div>
       <div class="content-card-meta">
-        ${node.description || ''}
-        <br>
+        ${node.type !== 'durational' && node.description ? node.description + '<br>' : ''}
         Position: Auto-assigned | Threads: ${node.threads.join(', ')}
       </div>
     </div>
