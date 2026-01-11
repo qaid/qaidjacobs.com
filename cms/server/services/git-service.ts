@@ -44,9 +44,15 @@ export async function isGitAvailable(): Promise<boolean> {
  * Check if there are uncommitted changes in the content directory
  */
 export async function hasUncommittedChanges(): Promise<boolean> {
-  const result = await execGit(['diff', '--quiet', 'content/']);
-  // git diff --quiet returns exit code 1 if there are changes
-  return !result.success;
+  // Check for modified tracked files
+  const diffResult = await execGit(['diff', '--quiet', 'content/']);
+  if (!diffResult.success) {
+    return true;
+  }
+
+  // Check for untracked files in content directory
+  const statusResult = await execGit(['ls-files', '--others', '--exclude-standard', 'content/']);
+  return statusResult.success && statusResult.output.trim().length > 0;
 }
 
 /**
