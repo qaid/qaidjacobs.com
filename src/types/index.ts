@@ -57,7 +57,7 @@ export interface CuriosityData {
 
 // Durational content data (DJ mixes, talks, podcasts, presentations)
 export type DurationalSubtype = 'dj-mix' | 'talk' | 'podcast' | 'presentation';
-export type MediaSource = 'soundcloud' | 'mixcloud' | 'youtube' | 'vimeo';
+export type MediaSource = 'soundcloud' | 'mixcloud' | 'youtube' | 'vimeo' | 'spotify';
 
 export interface DurationalMedia {
   source: MediaSource;
