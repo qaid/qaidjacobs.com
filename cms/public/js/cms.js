@@ -232,6 +232,15 @@ function renderContentList() {
 function showCreateForm() {
   editingId = null;
 
+  // Handle special types (phrases, connections) separately
+  if (currentType === 'phrases') {
+    showCreatePhraseForm();
+    return;
+  } else if (currentType === 'connections') {
+    showCreateConnectionForm();
+    return;
+  }
+
   // Determine the singular type name for display
   let typeName;
   if (currentType === 'essays') typeName = 'Essay';
@@ -915,6 +924,51 @@ function renderPhrasesList() {
   `).join('');
 }
 
+function showCreatePhraseForm() {
+  editingId = null;
+  editTitle.textContent = 'Create New Phrase';
+
+  // Hide content list section when editing
+  document.querySelector('.content-list-section').classList.add('hidden');
+  editSection.classList.remove('hidden');
+
+  // Build create form for phrase
+  editForm.innerHTML = `
+    <div class="form-group">
+      <label for="phrase-text">Text *</label>
+      <textarea id="phrase-text" rows="4" required></textarea>
+      <small>The phrase or quote text</small>
+    </div>
+
+    <div class="form-group">
+      <label for="phrase-by">Attribution</label>
+      <input type="text" id="phrase-by" value="" placeholder="Author name (optional)">
+      <small>Who said or wrote this phrase (leave empty for anonymous)</small>
+    </div>
+
+    <div class="form-actions-bottom">
+      <div style="margin-left: auto; display: flex; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary btn-cancel-bottom">Cancel</button>
+        <button type="button" class="btn btn-primary btn-save-bottom">Save</button>
+      </div>
+    </div>
+  `;
+
+  // Add event listeners
+  document.querySelector('.btn-cancel-bottom').addEventListener('click', () => hideEditForm());
+  document.querySelector('.btn-save-bottom').addEventListener('click', () => savePhrase());
+
+  editForm.scrollIntoView({ behavior: 'smooth' });
+
+  // Focus the text area
+  setTimeout(() => {
+    const textArea = document.getElementById('phrase-text');
+    if (textArea) {
+      textArea.focus();
+    }
+  }, 100);
+}
+
 window.editPhrase = function(index) {
   const phrase = allPhrases[index];
 
@@ -966,26 +1020,34 @@ async function savePhrase() {
       return;
     }
 
-    const updatedPhrase = { text, by };
+    const phrase = { text, by };
 
-    // Update the phrase in the array
-    allPhrases[editingId] = updatedPhrase;
-
-    // Send updated phrases to server
-    const response = await fetch('http://localhost:3001/api/phrases', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phrases: allPhrases })
-    });
+    let response;
+    if (editingId === null) {
+      // Create new phrase
+      response = await fetch('http://localhost:3001/api/phrases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phrase })
+      });
+    } else {
+      // Update existing phrase
+      allPhrases[editingId] = phrase;
+      response = await fetch('http://localhost:3001/api/phrases', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phrases: allPhrases })
+      });
+    }
 
     const result = await response.json();
 
     if (result.success) {
-      showNotification('success', 'Phrase updated successfully');
+      showNotification('success', editingId === null ? 'Phrase created successfully' : 'Phrase updated successfully');
       await loadPhrases();
       hideEditForm();
     } else {
-      showNotification('error', result.error || 'Failed to update phrase');
+      showNotification('error', result.error || 'Failed to save phrase');
     }
   } catch (error) {
     showNotification('error', `Save failed: ${error.message}`);
@@ -1050,6 +1112,60 @@ function renderConnectionsList() {
       </div>
     </div>
   `).join('');
+}
+
+function showCreateConnectionForm() {
+  editingId = null;
+  editTitle.textContent = 'Create New Connection';
+
+  // Hide content list section when editing
+  document.querySelector('.content-list-section').classList.add('hidden');
+  editSection.classList.remove('hidden');
+
+  // Build create form for connection
+  editForm.innerHTML = `
+    <div class="form-group">
+      <label for="conn-from">From Node ID *</label>
+      <input type="text" id="conn-from" required placeholder="e.g., beat-sketch">
+      <small>The ID of the source node</small>
+    </div>
+
+    <div class="form-group">
+      <label for="conn-to">To Node ID *</label>
+      <input type="text" id="conn-to" required placeholder="e.g., mix-2019">
+      <small>The ID of the target node</small>
+    </div>
+
+    <div class="form-group">
+      <label>Threads *</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="conn-threads" value="music"> Music</label>
+        <label><input type="checkbox" name="conn-threads" value="movement"> Movement</label>
+        <label><input type="checkbox" name="conn-threads" value="questions"> Questions</label>
+      </div>
+    </div>
+
+    <div class="form-actions-bottom">
+      <div style="margin-left: auto; display: flex; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary btn-cancel-bottom">Cancel</button>
+        <button type="button" class="btn btn-primary btn-save-bottom">Save</button>
+      </div>
+    </div>
+  `;
+
+  // Add event listeners
+  document.querySelector('.btn-cancel-bottom').addEventListener('click', () => hideEditForm());
+  document.querySelector('.btn-save-bottom').addEventListener('click', () => saveConnection());
+
+  editForm.scrollIntoView({ behavior: 'smooth' });
+
+  // Focus the first input
+  setTimeout(() => {
+    const firstInput = document.getElementById('conn-from');
+    if (firstInput) {
+      firstInput.focus();
+    }
+  }, 100);
 }
 
 window.editConnection = function(index) {
@@ -1119,26 +1235,34 @@ async function saveConnection() {
       return;
     }
 
-    const updatedConnection = { from, to, threads };
+    const connection = { from, to, threads };
 
-    // Update the connection in the array
-    allConnections[editingId] = updatedConnection;
-
-    // Send updated connections to server
-    const response = await fetch('http://localhost:3001/api/connections', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ connections: allConnections })
-    });
+    let response;
+    if (editingId === null) {
+      // Create new connection
+      response = await fetch('http://localhost:3001/api/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connection })
+      });
+    } else {
+      // Update existing connection
+      allConnections[editingId] = connection;
+      response = await fetch('http://localhost:3001/api/connections', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connections: allConnections })
+      });
+    }
 
     const result = await response.json();
 
     if (result.success) {
-      showNotification('success', 'Connection updated successfully');
+      showNotification('success', editingId === null ? 'Connection created successfully' : 'Connection updated successfully');
       await loadConnections();
       hideEditForm();
     } else {
-      showNotification('error', result.error || 'Failed to update connection');
+      showNotification('error', result.error || 'Failed to save connection');
     }
   } catch (error) {
     showNotification('error', `Save failed: ${error.message}`);
