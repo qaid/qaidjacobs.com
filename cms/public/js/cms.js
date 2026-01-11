@@ -239,6 +239,7 @@ function showCreateForm() {
   else if (currentType === 'durational') typeName = 'Durational';
   else if (currentType === 'music') typeName = 'Music';
   else if (currentType === 'movement') typeName = 'Movement';
+  else if (currentType === 'bio') typeName = 'Bio';
   else typeName = currentType.charAt(0).toUpperCase() + currentType.slice(1, -1);
 
   editTitle.textContent = `Create New ${typeName}`;
@@ -252,6 +253,9 @@ function showCreateForm() {
   if (currentType === 'essays') nodeType = 'essay';
   else if (currentType === 'curiosities') nodeType = 'curiosity';
   else if (currentType === 'durational') nodeType = 'durational';
+  else if (currentType === 'bio') nodeType = 'bio';
+  else if (currentType === 'music') nodeType = 'music';
+  else if (currentType === 'movement') nodeType = 'movement';
   else nodeType = currentType.slice(0, -1);
 
   // Create empty node for the form
@@ -293,7 +297,10 @@ async function handleSave() {
     if (currentType === 'essays') type = 'essay';
     else if (currentType === 'curiosities') type = 'curiosity';
     else if (currentType === 'durational') type = 'durational';
-    else type = currentType.slice(0, -1); // music -> music, movement -> movement, bio -> bio
+    else if (currentType === 'bio') type = 'bio';
+    else if (currentType === 'music') type = 'music';
+    else if (currentType === 'movement') type = 'movement';
+    else type = currentType.slice(0, -1);
 
     const node = { id, title, type, threads, visible_on_landing: visibleOnLanding, x, y };
 
