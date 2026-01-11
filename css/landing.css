@@ -119,11 +119,6 @@ body.container-mode .particle {
   color: var(--thread-movement);
 }
 
-.node-dot[data-type="questions"] {
-  background: var(--thread-questions);
-  color: var(--thread-questions);
-}
-
 .node-dot[data-type="curiosity"] {
   background: var(--thread-curiosity);
   color: var(--thread-curiosity);
@@ -188,12 +183,6 @@ body.container-mode .node-dot.container-active {
   color: var(--thread-movement);
   background: var(--thread-movement);
   filter: drop-shadow(0 0 12px rgba(79, 209, 197, 0.35));
-}
-
-.node-dot[data-type="questions"] {
-  color: var(--thread-questions);
-  background: var(--thread-questions);
-  filter: drop-shadow(0 0 12px rgba(246, 197, 108, 0.45));
 }
 
 .node-dot[data-type="curiosity"] {
