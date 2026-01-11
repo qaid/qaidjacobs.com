@@ -7,6 +7,8 @@
   --thread-movement: #14b8a6;
   --thread-questions: #f59e0b;
   --thread-curiosity: #3b82f6;
+  --thread-essay: #8b5cf6;
+  --thread-durational: #ec4899;
   --paper: rgba(0, 0, 0, 0.04);
   --border: 1px solid rgba(0, 0, 0, 0.08);
 
@@ -61,6 +63,8 @@
     --thread-movement: #4fd1c5;
     --thread-questions: #f6c56c;
     --thread-curiosity: #60a5fa;
+    --thread-essay: #a78bfa;
+    --thread-durational: #f472b6;
     --paper: rgba(255, 255, 255, 0.04);
     --border: 1px solid rgba(255, 255, 255, 0.08);
 
@@ -92,6 +96,8 @@
   --thread-movement: #4fd1c5;
   --thread-questions: #f6c56c;
   --thread-curiosity: #60a5fa;
+  --thread-essay: #a78bfa;
+  --thread-durational: #f472b6;
   --paper: rgba(255, 255, 255, 0.04);
   --border: 1px solid rgba(255, 255, 255, 0.08);
 

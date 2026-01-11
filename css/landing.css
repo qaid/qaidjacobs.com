@@ -202,6 +202,18 @@ body.container-mode .node-dot.container-active {
   filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.45));
 }
 
+.node-dot[data-type="essay"] {
+  color: var(--thread-essay);
+  background: var(--thread-essay);
+  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.45));
+}
+
+.node-dot[data-type="durational"] {
+  color: var(--thread-durational);
+  background: var(--thread-durational);
+  filter: drop-shadow(0 0 12px rgba(236, 72, 153, 0.45));
+}
+
 /* Bio node - black in light mode, white in dark mode */
 .node-dot[data-type="bio"] {
   background: var(--fg);
