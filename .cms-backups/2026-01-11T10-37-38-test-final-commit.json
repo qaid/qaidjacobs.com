@@ -1,0 +1,12 @@
+{
+  "id": "test-final-commit",
+  "title": "Final Test",
+  "type": "bio",
+  "threads": [
+    "movement"
+  ],
+  "visible_on_landing": false,
+  "bioText": "Testing the complete git auto-commit workflow.",
+  "x": 50,
+  "y": 50
+}

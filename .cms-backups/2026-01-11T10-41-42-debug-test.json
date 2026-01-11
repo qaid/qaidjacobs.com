@@ -1,0 +1,12 @@
+{
+  "id": "debug-test",
+  "title": "Debug Test",
+  "type": "bio",
+  "threads": [
+    "questions"
+  ],
+  "visible_on_landing": false,
+  "bioText": "Debug test",
+  "x": 50,
+  "y": 50
+}
