@@ -39,6 +39,14 @@ function extractVimeoId(url: string): string {
 }
 
 /**
+ * Extract Spotify ID from URL (track, album, playlist, episode, show)
+ */
+function extractSpotifyId(url: string): string {
+  const match = url.match(/spotify\.com\/(track|album|playlist|episode|show)\/([a-zA-Z0-9]+)/);
+  return match ? `${match[1]}/${match[2]}` : '';
+}
+
+/**
  * Create appropriate embed iframe based on media source
  */
 function createEmbed(media: DurationalMedia): HTMLElement {
@@ -64,6 +72,10 @@ function createEmbed(media: DurationalMedia): HTMLElement {
     case 'vimeo':
       const vimeoId = extractVimeoId(media.url);
       iframe.src = `https://player.vimeo.com/video/${vimeoId}`;
+      break;
+    case 'spotify':
+      const spotifyId = extractSpotifyId(media.url);
+      iframe.src = `https://open.spotify.com/embed/${spotifyId}`;
       break;
   }
 

@@ -541,6 +541,10 @@ function extractVimeoId(url) {
   const match = url.match(/vimeo\.com\/(\d+)/);
   return match?.[1] || "";
 }
+function extractSpotifyId(url) {
+  const match = url.match(/spotify\.com\/(track|album|playlist|episode|show)\/([a-zA-Z0-9]+)/);
+  return match ? `${match[1]}/${match[2]}` : "";
+}
 function createEmbed(media) {
   const iframe = createElement("iframe", {
     className: "durational-embed"
@@ -562,6 +566,10 @@ function createEmbed(media) {
     case "vimeo":
       const vimeoId = extractVimeoId(media.url);
       iframe.src = `https://player.vimeo.com/video/${vimeoId}`;
+      break;
+    case "spotify":
+      const spotifyId = extractSpotifyId(media.url);
+      iframe.src = `https://open.spotify.com/embed/${spotifyId}`;
       break;
   }
   return iframe;

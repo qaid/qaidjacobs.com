@@ -165,7 +165,7 @@ export function validateDurationalData(data: Partial<DurationalData>): Validatio
   } else {
     if (!data.media.source) {
       errors.push('Media source is required');
-    } else if (!['soundcloud', 'mixcloud', 'youtube', 'vimeo'].includes(data.media.source)) {
+    } else if (!['soundcloud', 'mixcloud', 'youtube', 'vimeo', 'spotify'].includes(data.media.source)) {
       errors.push('Invalid media source');
     }
 

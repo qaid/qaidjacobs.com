@@ -612,8 +612,10 @@ async function showEditForm(node, essayContent = '') {
         <label for="media-source">Media Source</label>
         <select id="media-source">
           <option value="soundcloud" ${node.media?.source === 'soundcloud' ? 'selected' : ''}>SoundCloud</option>
+          <option value="mixcloud" ${node.media?.source === 'mixcloud' ? 'selected' : ''}>Mixcloud</option>
           <option value="youtube" ${node.media?.source === 'youtube' ? 'selected' : ''}>YouTube</option>
           <option value="vimeo" ${node.media?.source === 'vimeo' ? 'selected' : ''}>Vimeo</option>
+          <option value="spotify" ${node.media?.source === 'spotify' ? 'selected' : ''}>Spotify</option>
         </select>
       </div>
 
