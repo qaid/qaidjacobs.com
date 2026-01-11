@@ -1069,6 +1069,7 @@ window.deletePhrase = async function(index) {
     if (result.success) {
       showNotification('success', 'Phrase deleted successfully');
       await loadPhrases();
+      hideEditForm();
     } else {
       showNotification('error', result.error || 'Failed to delete phrase');
     }
