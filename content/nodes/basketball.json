@@ -7,8 +7,8 @@
     "movement"
   ],
   "visible_on_landing": true,
-  "x": 75,
-  "y": 25,
+  "x": 17,
+  "y": 30,
   "description": "",
   "subtype": "map",
   "is_hub": true

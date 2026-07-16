@@ -3,8 +3,8 @@ import {
   focusEssay
 } from "./main.js";
 import {
-  DOT_RADIUS,
   DOT_SIZE,
+  THREAD_COLORS,
   THREAD_PALETTES,
   clearContainerContent,
   get,
@@ -14,7 +14,7 @@ import {
   set,
   setContainerType,
   updateContainerHeader
-} from "./curiosity-4vn8p1s8.js";
+} from "./curiosity-8fw4ba3s.js";
 import {
   createElement,
   getById,
@@ -51,22 +51,6 @@ function rotatePhrase(phrases) {
   const next = phrases[Math.floor(Math.random() * phrases.length)];
   currentPhraseText = next.text || "";
   currentPhraseBy = next.by ? `— ${next.by}` : "";
-  phraseTextEl.textContent = currentPhraseText;
-  if (phraseByEl) {
-    phraseByEl.textContent = currentPhraseBy;
-  }
-}
-function showCustomPhrase(text, attribution) {
-  if (!phraseTextEl)
-    return;
-  phraseTextEl.textContent = text;
-  if (phraseByEl) {
-    phraseByEl.textContent = attribution ? `— ${attribution}` : "";
-  }
-}
-function restorePhrase() {
-  if (!phraseTextEl)
-    return;
   phraseTextEl.textContent = currentPhraseText;
   if (phraseByEl) {
     phraseByEl.textContent = currentPhraseBy;
@@ -212,15 +196,16 @@ function nodesToPx(nodes, container) {
 }
 function createThreadLine(from, to, thread, index) {
   const line = createElement("div", { className: "thread" });
-  const primaryThread = thread.threads?.[0] || "questions";
-  const palette = THREAD_PALETTES[primaryThread] || THREAD_PALETTES.questions;
+  const threadTypes = thread.threads?.length ? thread.threads : ["questions"];
+  const colors = threadTypes.map((t) => THREAD_COLORS[t] || THREAD_COLORS.questions);
+  const primaryThread = threadTypes[0];
   line.dataset.thread = primaryThread;
+  line.dataset.threads = threadTypes.join(" ");
   line.dataset.from = thread.from;
   line.dataset.to = thread.to;
+  const stops = colors.length === 1 ? `${colors[0]}, ${colors[0]}` : colors.map((c, i) => `${c} ${Math.round(i / (colors.length - 1) * 100)}%`).join(", ");
+  line.style.setProperty("--blend", stops);
   line.style.setProperty("--i", String(index));
-  line.style.setProperty("--strand1", palette[0]);
-  line.style.setProperty("--strand2", palette[1]);
-  line.style.setProperty("--strand3", palette[2]);
   const x1 = from.center.x;
   const y1 = from.center.y;
   const x2 = to.center.x;
@@ -236,28 +221,55 @@ function createThreadLine(from, to, thread, index) {
   line.style.transform = `rotate(${angle}deg)`;
   return line;
 }
-function createNodeDot(node, index, callbacks) {
-  const dot = createElement("div", {
-    className: "node-dot brownian",
+var TYPE_LABEL = {
+  essay: "Essay",
+  durational: "Listen",
+  curiosity: "Curiosity",
+  bio: "About"
+};
+function typeKind(node) {
+  if (node.subtype === "dj-mix")
+    return "Mix";
+  if (node.subtype === "podcast")
+    return "Podcast";
+  if (node.subtype === "talk" || node.subtype === "performance")
+    return "Talk";
+  return TYPE_LABEL[node.type] || "Node";
+}
+function labelSide(node, containerWidth) {
+  return node.center.x > containerWidth * 0.62 ? "left" : "right";
+}
+function createNodeDot(node, index, containerWidth, callbacks) {
+  const wrap = createElement("div", {
+    className: "node",
     "data-type": node.type,
     "data-id": node.id
   });
-  dot.style.setProperty("--i", String(index));
-  dot.style.left = `${node.center.x - DOT_RADIUS}px`;
-  dot.style.top = `${node.center.y - DOT_RADIUS}px`;
-  dot.dataset.origLeft = dot.style.left;
-  dot.dataset.origTop = dot.style.top;
-  dot.title = node.title || node.id;
-  dot.addEventListener("click", () => {
-    callbacks.onClick(node);
-  });
-  dot.addEventListener("mouseenter", () => {
-    callbacks.onHoverEnter(node);
-  });
-  dot.addEventListener("mouseleave", () => {
-    callbacks.onHoverLeave(node);
-  });
-  return dot;
+  const side = labelSide(node, containerWidth);
+  wrap.dataset.labelSide = side;
+  wrap.style.setProperty("--i", String(index));
+  wrap.style.left = `${node.center.x}px`;
+  wrap.style.top = `${node.center.y}px`;
+  const marker = createElement("div", { className: "node-dot brownian" });
+  marker.dataset.type = node.type;
+  if (node.subtype)
+    marker.dataset.subtype = node.subtype;
+  const label = createElement("div", { className: "node-label" });
+  const kindEl = createElement("span", { className: "node-label-kind" }, [typeKind(node)]);
+  const titleEl = createElement("span", { className: "node-label-title" }, [
+    node.title || node.id
+  ]);
+  label.appendChild(kindEl);
+  label.appendChild(titleEl);
+  wrap.appendChild(marker);
+  wrap.appendChild(label);
+  wrap.dataset.origLeft = wrap.style.left;
+  wrap.dataset.origTop = wrap.style.top;
+  wrap.title = node.title || node.id;
+  wrap.addEventListener("click", () => callbacks.onClick(node));
+  wrap.addEventListener("mouseenter", () => callbacks.onHoverEnter(node));
+  wrap.addEventListener("mouseleave", () => callbacks.onHoverLeave(node));
+  return wrap;
 }
 function renderWeb(container, callbacks) {
   if (!container)
@@ -278,8 +290,9 @@ function renderWeb(container, callbacks) {
     container.appendChild(line);
     threadElements.push(line);
   });
+  const containerWidth = container.getBoundingClientRect().width;
   nodesPx.forEach((node, idx) => {
-    const dot = createNodeDot(node, idx, callbacks);
+    const dot = createNodeDot(node, idx, containerWidth, callbacks);
     container.appendChild(dot);
     dotElements.set(node.id, dot);
   });
@@ -333,6 +346,10 @@ function easeInOutQuad(t) {
 }
 
 // src/components/particles.ts
+function threadColors(thread) {
+  const list = (thread.dataset.threads || thread.dataset.thread || "questions").split(" ").filter(Boolean);
+  return list.map((t) => (THREAD_PALETTES[t] || THREAD_PALETTES.questions)[0]);
+}
 var PARTICLE_COUNT = 25;
 var STREAM_DURATION = 2400;
 var activeStreams = new Map;
@@ -340,13 +357,9 @@ var streamParticles = new Map;
 function getCurrentDotPosition(dotElement) {
   const left = parseFloat(dotElement.style.left || "0");
   const top = parseFloat(dotElement.style.top || "0");
-  const DOT_RADIUS2 = 12;
-  return {
-    x: left + DOT_RADIUS2,
-    y: top + DOT_RADIUS2
-  };
+  return { x: left, y: top };
 }
-function createParticle(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId, index, onComplete) {
+function createParticle(container, sourceDot, targetDot, color, streamId, index, onComplete) {
   const particle = createElement("div", { className: "particle" });
   particle.style.background = color;
   particle.style.boxShadow = `0 0 4px ${color}, 0 0 2px ${color}`;
@@ -415,12 +428,13 @@ function createParticle(container, sourceNodeId, targetNodeId, sourceDot, target
   }, randomDelay);
   return particle;
 }
-function createParticleStream(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId) {
+function createParticleStream(container, sourceDot, targetDot, colors, streamId) {
   const particles = [];
   function spawnParticle(index) {
     if (!activeStreams.has(streamId))
       return;
-    const particle = createParticle(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId, index, () => {
+    const color = colors[index % colors.length];
+    const particle = createParticle(container, sourceDot, targetDot, color, streamId, index, () => {
       if (activeStreams.has(streamId)) {
         spawnParticle(index);
       }
@@ -432,7 +446,7 @@ function createParticleStream(container, sourceNodeId, targetNodeId, sourceDot, 
   }
   return particles;
 }
-function startParticleStreams(nodeId, nodesPx, threadElements2, container, dotElements2) {
+function startParticleStreams(nodeId, _nodesPx, threadElements2, container, dotElements2) {
   stopParticleStreams(nodeId);
   const connectedThreads = threadElements2.filter((thread) => thread.dataset.from === nodeId || thread.dataset.to === nodeId);
   const allParticles = [];
@@ -445,17 +459,13 @@ function startParticleStreams(nodeId, nodesPx, threadElements2, container, dotEl
     const toDot = dotElements2.get(toNodeId);
     if (!fromDot || !toDot)
       return;
-    const primaryThread = thread.dataset.thread || "questions";
-    const palette = THREAD_PALETTES[primaryThread] || THREAD_PALETTES.questions;
-    const color = palette[0];
+    const colors = threadColors(thread);
     const isFromHovered = fromNodeId === nodeId;
-    const sourceNodeId = isFromHovered ? fromNodeId : toNodeId;
-    const targetNodeId = isFromHovered ? toNodeId : fromNodeId;
     const sourceDot = isFromHovered ? fromDot : toDot;
     const targetDot = isFromHovered ? toDot : fromDot;
     const streamId = `${nodeId}-${idx}`;
     activeStreams.set(streamId, true);
-    const particles = createParticleStream(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId);
+    const particles = createParticleStream(container, sourceDot, targetDot, colors, streamId);
     allParticles.push(...particles);
   });
   streamParticles.set(nodeId, allParticles);
@@ -533,6 +543,59 @@ registerRenderer("essay", essayRenderer);
 var particleStates = [];
 var animationFrameId = null;
 var containerRect = null;
+var activeContentEl = null;
+var scWidget = null;
+var SC_API_SRC = "https://w.soundcloud.com/player/api.js";
+var scApiPromise = null;
+function loadSoundCloudApi() {
+  if (scApiPromise)
+    return scApiPromise;
+  scApiPromise = new Promise((resolve) => {
+    const w = window;
+    if (w.SC?.Widget) {
+      resolve(w.SC);
+      return;
+    }
+    const existing = document.querySelector(`script[src="${SC_API_SRC}"]`);
+    const onReady = () => resolve(window.SC || null);
+    if (existing) {
+      existing.addEventListener("load", onReady);
+      existing.addEventListener("error", () => resolve(null));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = SC_API_SRC;
+    script.async = true;
+    script.addEventListener("load", onReady);
+    script.addEventListener("error", () => resolve(null));
+    document.head.appendChild(script);
+  });
+  return scApiPromise;
+}
+function saturationCurve(progress) {
+  const p = Math.max(0, Math.min(1, progress));
+  return 0.25 + 0.75 * Math.sin(Math.PI * p);
+}
+function applyIntensity(intensity) {
+  if (!activeContentEl)
+    return;
+  activeContentEl.style.setProperty("--durational-intensity", intensity.toFixed(3));
+}
+async function wireSoundCloudCurve(iframe) {
+  applyIntensity(saturationCurve(0));
+  const SC = await loadSoundCloudApi();
+  if (!SC?.Widget)
+    return;
+  try {
+    scWidget = SC.Widget(iframe);
+    scWidget.bind(SC.Widget.Events.PLAY_PROGRESS, (e) => {
+      applyIntensity(saturationCurve(e.relativePosition ?? 0));
+    });
+    scWidget.bind(SC.Widget.Events.FINISH, () => applyIntensity(saturationCurve(1)));
+  } catch {
+    scWidget = null;
+  }
+}
 function extractYouTubeId(url) {
   const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/);
   return match?.[1] || "";
@@ -670,11 +733,17 @@ var durationalRenderer = {
       return;
     }
     const container = createElement("div", { className: "durational-content" });
+    activeContentEl = container;
+    container.style.setProperty("--durational-intensity", saturationCurve(0).toFixed(3));
     const particleBg = createElement("div", { className: "durational-particles" });
     container.appendChild(particleBg);
     const playerWrapper = createElement("div", { className: "durational-player" });
-    playerWrapper.appendChild(createEmbed(data.media));
+    const embed = createEmbed(data.media);
+    playerWrapper.appendChild(embed);
     container.appendChild(playerWrapper);
+    if (data.media.source === "soundcloud") {
+      wireSoundCloudCurve(embed);
+    }
     const descriptionText = data.description || data.commentary || "";
     if (descriptionText) {
       const description = createElement("div", { className: "durational-description" });
@@ -691,6 +760,17 @@ var durationalRenderer = {
   },
   cleanup() {
     stopParticles();
+    if (scWidget) {
+      try {
+        const SC = window.SC;
+        if (SC?.Widget?.Events) {
+          scWidget.unbind(SC.Widget.Events.PLAY_PROGRESS);
+          scWidget.unbind(SC.Widget.Events.FINISH);
+        }
+      } catch {}
+      scWidget = null;
+    }
+    activeContentEl = null;
   }
 };
 registerRenderer("durational", durationalRenderer);
@@ -758,7 +838,7 @@ async function setOverlayContent(nodeId) {
   if (renderer) {
     await renderer.render(nodeId, cardEl);
     if (node.type === "curiosity") {
-      const { getRefreshCallback } = await import("./curiosity-4vn8p1s8.js");
+      const { getRefreshCallback } = await import("./curiosity-8fw4ba3s.js");
       refreshCuriosityLines = getRefreshCallback();
     }
   } else {
@@ -953,9 +1033,6 @@ function exitContainerMode() {
 function handleNodeClick(node) {
   if (isAnimatingContainer)
     return;
-  if (node.type === "bio") {
-    return;
-  }
   const isContainerMode = get("isContainerMode");
   const activeNodeId = get("activeNodeId");
   if (isContainerMode) {
@@ -979,13 +1056,6 @@ function handleNodeHoverEnter(node) {
   const dotElements2 = getDotElements();
   pauseMotion(node.id);
   startParticleStreams(node.id, nodesPx, threadElements2, webEl, dotElements2);
-  if (node.type === "bio") {
-    console.log("Bio hover:", node.id, "bioText:", node.bioText);
-    if (node.bioText) {
-      showCustomPhrase(node.bioText);
-    }
-    return;
-  }
   if (node.type === "curiosity") {
     const cached = curiosityCentralById.get(node.id);
     const dot = getDotElements().get(node.id);
@@ -1008,8 +1078,22 @@ function handleNodeHoverEnter(node) {
 function handleNodeHoverLeave(node) {
   stopParticleStreams(node.id);
   resumeMotion(node.id);
-  if (node.type === "bio") {
-    restorePhrase();
+}
+async function initBioSignature() {
+  const el = getById("bio-signature");
+  if (!el)
+    return;
+  try {
+    const bio = await loadJSON("content/nodes/bio.json");
+    const raw = (bio?.bioText || "").trim();
+    if (!raw)
+      return;
+    const text = raw.replace(/\s*\n+\s*/g, " ").replace(/\s+/g, " ").trim();
+    el.textContent = text;
+    el.classList.add("is-visible");
+  } catch {
+    el.textContent = "In short, I'm Qa'id: a father, designer, DJ, tinkerer. Always in motion between places and questions.";
+    el.classList.add("is-visible");
   }
 }
 async function initLanding() {
@@ -1024,6 +1108,7 @@ async function initLanding() {
     set("threads", threadsData);
     initPhrase();
     rotatePhrase(phrasesData);
+    initBioSignature();
     renderWeb(webEl, {
       onClick: handleNodeClick,
       onHoverEnter: handleNodeHoverEnter,

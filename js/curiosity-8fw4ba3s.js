@@ -82,6 +82,11 @@ var THREAD_PALETTES = {
   movement: ["#4fd1c5", "#7de8dd", "#b1fff4"],
   questions: ["#f6c56c", "#ffd28c", "#ffe7b8"]
 };
+var THREAD_COLORS = {
+  music: "#ff7a9e",
+  movement: "#4fd1c5",
+  questions: "#f6c56c"
+};
 var initialState = {
   phrases: [],
   nodes: [],
@@ -246,4 +251,4 @@ export {
   curiosityRenderer
 };
 
-export { loadJSON, DOT_SIZE, DOT_RADIUS, THREAD_PALETTES, get, set, registerRenderer, clearContainerContent, updateContainerHeader, setContainerType, getRendererForNode };
+export { loadJSON, DOT_SIZE, THREAD_PALETTES, THREAD_COLORS, get, set, registerRenderer, clearContainerContent, updateContainerHeader, setContainerType, getRendererForNode };

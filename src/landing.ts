@@ -13,8 +13,6 @@ import {
   hidePhrase,
   showPhraseSlow,
   rotatePhrase,
-  showCustomPhrase,
-  restorePhrase,
 } from './components/phrase';
 import {
   renderWeb,
@@ -380,11 +378,6 @@ function exitContainerMode(): void {
 function handleNodeClick(node: NodePx): void {
   if (isAnimatingContainer) return;
 
-  // Bio node doesn't open a container
-  if (node.type === 'bio') {
-    return;
-  }
-
   const isContainerMode = get('isContainerMode');
   const activeNodeId = get('activeNodeId');
 
@@ -413,15 +406,6 @@ function handleNodeHoverEnter(node: NodePx): void {
   pauseMotion(node.id);
   startParticleStreams(node.id, nodesPx, threadElements, webEl, dotElements);
 
-  // Bio node: show bio text in phrase area
-  if (node.type === 'bio') {
-    console.log('Bio hover:', node.id, 'bioText:', node.bioText);
-    if (node.bioText) {
-      showCustomPhrase(node.bioText);
-    }
-    return;
-  }
-
   // Load curiosity central label
   if (node.type === 'curiosity') {
     const cached = curiosityCentralById.get(node.id);
@@ -449,10 +433,28 @@ function handleNodeHoverEnter(node: NodePx): void {
 function handleNodeHoverLeave(node: NodePx): void {
   stopParticleStreams(node.id);
   resumeMotion(node.id);
+}
 
-  // Bio node: restore original phrase
-  if (node.type === 'bio') {
-    restorePhrase();
+/**
+ * Load the bio signature text and render it at the bottom of the landing.
+ * Bio is a signature, not a web node — it lives here, always visible.
+ */
+async function initBioSignature(): Promise<void> {
+  const el = getById('bio-signature');
+  if (!el) return;
+  try {
+    const bio = await loadJSON<{ bioText?: string }>('content/nodes/bio.json');
+    const raw = (bio?.bioText || '').trim();
+    if (!raw) return;
+    // Collapse authored line breaks into a single flowing signature line.
+    const text = raw.replace(/\s*\n+\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    el.textContent = text;
+    el.classList.add('is-visible');
+  } catch {
+    // Fall back to the canonical signature if the file is unavailable.
+    el.textContent =
+      "In short, I'm Qa'id: a father, designer, DJ, tinkerer. Always in motion between places and questions.";
+    el.classList.add('is-visible');
   }
 }
 
@@ -476,6 +478,9 @@ async function initLanding(): Promise<void> {
     // Initialize phrase component
     initPhrase();
     rotatePhrase(phrasesData);
+
+    // Bio signature (always visible at the bottom)
+    initBioSignature();
 
     // Render web with event handlers
     renderWeb(webEl, {

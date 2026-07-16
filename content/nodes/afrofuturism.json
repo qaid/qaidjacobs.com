@@ -3,9 +3,11 @@
   "title": "Afrofuturism",
   "type": "curiosity",
   "subtype": "map",
-  "threads": ["questions"],
+  "threads": [
+    "questions"
+  ],
   "visible_on_landing": true,
-  "x": 74,
-  "y": 55,
+  "x": 83,
+  "y": 45,
   "is_hub": true
 }

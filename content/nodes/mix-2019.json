@@ -3,8 +3,10 @@
   "title": "Mortgage Music - Early 90's House Mix",
   "type": "durational",
   "subtype": "dj-mix",
-  "threads": ["music"],
+  "threads": [
+    "music"
+  ],
   "visible_on_landing": true,
-  "x": 22,
-  "y": 28
+  "x": 33,
+  "y": 63
 }
