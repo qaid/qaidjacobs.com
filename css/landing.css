@@ -209,6 +209,24 @@ body.container-mode .particle {
   transform: translate(-50%, -50%);
 }
 
+/* Artifact: a scrapbook pile — two offset stacked "photos" */
+.node-dot[data-type="artifact"] {
+  width: 16px;
+  height: 14px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(-4deg);
+}
+.node-dot[data-type="artifact"]::after {
+  content: "";
+  position: absolute;
+  inset: -3px 3px 3px -3px;
+  border-radius: 2px;
+  border: 1.5px solid currentColor;
+  background: var(--bg);
+  transform: rotate(7deg);
+}
+
 /* Curiosity: a small constellation — three clustered dots */
 .node-dot[data-type="curiosity"] {
   width: 18px;
@@ -376,6 +394,7 @@ html[data-theme="dark"] .curiosity-lines line {
   color: var(--fg);
   letter-spacing: -0.01em;
   white-space: nowrap;
+  text-transform: capitalize;
 }
 
 html[data-theme="dark"] .curiosity-center-pill {
@@ -625,7 +644,8 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
     bottom: auto;
     transform: none;
     width: auto;
-    margin: var(--space-4) auto var(--space-8);
+    /* Bottom clearance for the fixed corner nav logo (56px + its inset). */
+    margin: var(--space-4) auto calc(56px + var(--space-8));
     padding: 0 var(--space-5);
     max-width: 560px;
   }

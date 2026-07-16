@@ -68,7 +68,7 @@
 /* Show scroll indicator when essay has more content */
 .container-overlay.is-essay.has-scroll .essay-container-wrapper .scroll-indicator {
   opacity: 1;
-  animation: bounce 2s ease-in-out infinite;
+  animation: scroll-hint-drift 2s ease-in-out infinite;
 }
 
 /* Dark mode indicator */
@@ -94,12 +94,20 @@ html[data-theme="dark"] .essay-container-wrapper .scroll-indicator::after {
   color: rgba(255, 255, 255, 0.8);
 }
 
-@keyframes bounce {
+/* Gentle vertical drift on the scroll hint — smooth ease-in-out, not a bounce ease */
+@keyframes scroll-hint-drift {
   0%, 100% {
     transform: translateX(-50%) translateY(0px);
   }
   50% {
     transform: translateX(-50%) translateY(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container-overlay.is-essay.has-scroll .essay-container-wrapper .scroll-indicator,
+  .scroll-indicator {
+    animation: none;
   }
 }
 

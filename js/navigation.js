@@ -29,6 +29,7 @@ var TYPE_LABEL = {
   essay: "Essay",
   durational: "Listen",
   curiosity: "Curiosity",
+  artifact: "Scrapbook",
   bio: "About"
 };
 function typeKind(node) {

@@ -140,5 +140,5 @@
 /* Scroll indicator for durational - same approach as essay */
 .container-overlay.is-durational.has-scroll .essay-container-wrapper .scroll-indicator {
   opacity: 1;
-  animation: bounce 2s ease-in-out infinite;
+  animation: scroll-hint-drift 2s ease-in-out infinite;
 }

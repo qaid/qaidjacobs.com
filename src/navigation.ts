@@ -48,6 +48,7 @@ const TYPE_LABEL: Record<string, string> = {
   essay: 'Essay',
   durational: 'Listen',
   curiosity: 'Curiosity',
+  artifact: 'Scrapbook',
   bio: 'About',
 };
 

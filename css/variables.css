@@ -46,7 +46,7 @@
 
   /* Typography */
   --font-body: "Fira Sans", system-ui, -apple-system, sans-serif;
-  --font-mono: "IBM Plex Mono", "Menlo", monospace;
+  --font-mono: "Courier Prime", "Courier New", monospace;
   --font-organic: "Caveat", "Segoe Script", "Bradley Hand", cursive;
   --size-base: 16px;
   --size-sm: 0.875rem;

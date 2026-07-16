@@ -86,8 +86,8 @@ button, input, textarea, select {
   border-radius: 50%;
   cursor: pointer;
   transition: background var(--transition), transform var(--transition);
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
