@@ -1,14 +1,11 @@
 import {
-  getById,
-  query
-} from "./main-65mq6067.js";
+  getById
+} from "./main-k51qvqm5.js";
 import"./main-3hqyeswk.js";
 
 // src/main.ts
 var themeToggle = getById("theme-toggle");
 var yearEl = getById("year");
-var navTrigger = query(".nav-trigger");
-var navOverlay = getById("nav-overlay");
 var webEl = getById("landing-web");
 var overlayEssay = getById("overlay-essay");
 function initTheme() {
@@ -24,29 +21,6 @@ function initTheme() {
       localStorage.setItem("theme", newTheme);
     });
   }
-}
-function initNav() {
-  if (!navTrigger || !navOverlay)
-    return;
-  navTrigger.addEventListener("click", () => {
-    const isOpen = !navOverlay.hasAttribute("hidden");
-    if (isOpen) {
-      navOverlay.setAttribute("hidden", "");
-      navTrigger.setAttribute("aria-expanded", "false");
-    } else {
-      navOverlay.removeAttribute("hidden");
-      navTrigger.setAttribute("aria-expanded", "true");
-    }
-  });
-  document.addEventListener("click", (e) => {
-    if (!navOverlay || navOverlay.hasAttribute("hidden"))
-      return;
-    const target = e.target;
-    if (navOverlay.contains(target) || navTrigger.contains(target))
-      return;
-    navOverlay.setAttribute("hidden", "");
-    navTrigger.setAttribute("aria-expanded", "false");
-  });
 }
 function enterContainer(detail = {}) {
   if (webEl)
@@ -80,89 +54,19 @@ function focusEssay(nodeId) {
 function closeEssay() {
   exitContainer();
 }
-var fadeAnimationId = null;
-var fadeStartTime = null;
-var fadeStartOpacity = 0;
-var isLogoHovered = false;
-var isHeaderHovered = false;
-var FADE_DURATION = 1e4;
-var CLICKABLE_THRESHOLD = 0.01;
-function updatePointerEvents(link, opacity) {
-  link.style.pointerEvents = opacity > CLICKABLE_THRESHOLD ? "auto" : "none";
-}
-function animateLogoFade(link, startOpacity) {
-  fadeStartTime = performance.now();
-  fadeStartOpacity = startOpacity;
-  function animate(currentTime) {
-    if (!fadeStartTime)
-      return;
-    if (isLogoHovered || isHeaderHovered) {
-      fadeAnimationId = null;
-      return;
-    }
-    const elapsed = currentTime - fadeStartTime;
-    const progress = Math.min(elapsed / FADE_DURATION, 1);
-    const currentOpacity = fadeStartOpacity * (1 - progress);
-    link.style.opacity = String(currentOpacity);
-    updatePointerEvents(link, currentOpacity);
-    if (progress < 1) {
-      fadeAnimationId = requestAnimationFrame(animate);
-    } else {
-      fadeAnimationId = null;
-      link.style.pointerEvents = "none";
-    }
-  }
-  if (fadeAnimationId !== null) {
-    cancelAnimationFrame(fadeAnimationId);
-  }
-  fadeAnimationId = requestAnimationFrame(animate);
-}
-function getCurrentOpacity(element) {
-  const opacity = window.getComputedStyle(element).opacity;
-  return parseFloat(opacity) || 0;
-}
 function initConstellationLogo() {
   const header = document.querySelector(".site-header");
   const constellationLink = getById("constellation-link");
   if (!header || !constellationLink)
     return;
-  header.addEventListener("mouseenter", () => {
-    isHeaderHovered = true;
-    if (fadeAnimationId !== null) {
-      cancelAnimationFrame(fadeAnimationId);
-      fadeAnimationId = null;
-    }
-    constellationLink.style.opacity = "1";
-    constellationLink.style.pointerEvents = "auto";
-  });
-  header.addEventListener("mouseleave", () => {
-    isHeaderHovered = false;
-    if (isLogoHovered)
-      return;
-    const currentOpacity = getCurrentOpacity(constellationLink);
-    animateLogoFade(constellationLink, currentOpacity);
-  });
-  constellationLink.addEventListener("mouseenter", (e) => {
-    const currentOpacity = getCurrentOpacity(constellationLink);
-    if (currentOpacity < CLICKABLE_THRESHOLD)
-      return;
-    isLogoHovered = true;
-    if (fadeAnimationId !== null) {
-      cancelAnimationFrame(fadeAnimationId);
-      fadeAnimationId = null;
-    }
-    constellationLink.style.opacity = "1";
-    constellationLink.style.pointerEvents = "auto";
-  });
-  constellationLink.addEventListener("mouseleave", () => {
-    isLogoHovered = false;
-    if (isHeaderHovered)
-      return;
-    animateLogoFade(constellationLink, 1);
-  });
+  const show = () => constellationLink.classList.add("is-shown");
+  const hide = () => constellationLink.classList.remove("is-shown");
+  header.addEventListener("mouseenter", show);
+  header.addEventListener("mouseleave", hide);
+  constellationLink.addEventListener("mouseenter", show);
+  constellationLink.addEventListener("mouseleave", hide);
 }
 initTheme();
-initNav();
 initConstellationLogo();
 if (yearEl) {
   yearEl.textContent = String(new Date().getFullYear());

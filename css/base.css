@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -195,15 +193,24 @@ html[data-theme="dark"] .nav-panel {
   transition: opacity 1000ms ease;
 }
 
-/* Constellation Design logo in footer */
+/* Constellation Design logo in footer.
+   Fade is driven by CSS transitions + classes (no persistent RAF loop):
+   - .is-shown → fade in fast
+   - default   → slow 10s fade out */
 .constellation-link {
   display: block;
   margin: 0 auto var(--space-4);
   width: fit-content;
   opacity: 0;
-  transition: opacity 1000ms ease;
+  transition: opacity 10000ms ease;
   pointer-events: none;
   text-decoration: none;
+}
+
+.constellation-link.is-shown {
+  opacity: 1;
+  transition: opacity 300ms ease;
+  pointer-events: auto;
 }
 
 .constellation-logo {
@@ -229,19 +236,6 @@ html[data-theme="dark"] .constellation-logo-light {
 
 html[data-theme="dark"] .constellation-logo-dark {
   display: block;
-}
-
-/* Show logo on header hover */
-.site-header:hover ~ main .site-footer .constellation-link {
-  opacity: 1;
-  transition: opacity 1000ms ease;
-  pointer-events: auto;
-}
-
-/* Logo hover: show at full opacity with smooth transition */
-.constellation-link:hover {
-  opacity: 1 !important;
-  transition: opacity 180ms ease !important;
 }
 
 .container-block {
@@ -379,5 +373,36 @@ html[data-theme="dark"] .container-card {
 
   .site-footer {
     padding: var(--space-6) var(--space-4);
+  }
+}
+
+/* Mobile containers: fill the viewport with an opaque surface so nothing
+   bleeds through, and give the card room to scroll on small screens. */
+@media (max-width: 768px) {
+  .container-overlay {
+    padding: 0;
+  }
+  .container-overlay.container-mode .container-card {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .essay-container-wrapper {
+    width: 100vw;
+    height: 100dvh;
+  }
+  /* Opaque paper on mobile — no translucency to show the landing behind. */
+  .container-overlay.is-essay .container-card {
+    background: #f8f6f0;
+  }
+  html[data-theme="dark"] .container-overlay.is-essay .container-card {
+    background: #1a1c1e;
+  }
+  /* Keep the close button clear of any device notch. */
+  .container-close {
+    top: max(var(--space-4), env(safe-area-inset-top));
+    margin-right: max(var(--space-4), env(safe-area-inset-right));
   }
 }

@@ -7,6 +7,15 @@ import type { NodePx, ThreadType } from '../types';
 import { createElement } from '../utils/dom';
 import { easeInOutQuad } from '../utils/animation';
 import { THREAD_PALETTES } from '../state/store';
+import { ambientMotionEnabled } from '../utils/env';
+
+// Resolve the ordered list of thread hues a connection carries.
+function threadColors(thread: HTMLElement): string[] {
+  const list = (thread.dataset.threads || thread.dataset.thread || 'questions')
+    .split(' ')
+    .filter(Boolean) as ThreadType[];
+  return list.map((t) => (THREAD_PALETTES[t] || THREAD_PALETTES.questions)[0]);
+}
 
 // Particle configuration
 const PARTICLE_COUNT = 25;
@@ -20,13 +29,10 @@ const streamParticles = new Map<string, HTMLElement[]>();
  * Get current center position of a node dot from DOM
  */
 function getCurrentDotPosition(dotElement: HTMLElement): { x: number; y: number } {
+  // The node wrapper is positioned by its center (left/top === center point).
   const left = parseFloat(dotElement.style.left || '0');
   const top = parseFloat(dotElement.style.top || '0');
-  const DOT_RADIUS = 12; // Half of DOT_SIZE (24px)
-  return {
-    x: left + DOT_RADIUS,
-    y: top + DOT_RADIUS,
-  };
+  return { x: left, y: top };
 }
 
 /**
@@ -34,8 +40,6 @@ function getCurrentDotPosition(dotElement: HTMLElement): { x: number; y: number 
  */
 function createParticle(
   container: HTMLElement,
-  sourceNodeId: string,
-  targetNodeId: string,
   sourceDot: HTMLElement,
   targetDot: HTMLElement,
   color: string,
@@ -137,11 +141,9 @@ function createParticle(
  */
 function createParticleStream(
   container: HTMLElement,
-  sourceNodeId: string,
-  targetNodeId: string,
   sourceDot: HTMLElement,
   targetDot: HTMLElement,
-  color: string,
+  colors: string[],
   streamId: string
 ): HTMLElement[] {
   const particles: HTMLElement[] = [];
@@ -149,10 +151,12 @@ function createParticleStream(
   function spawnParticle(index: number) {
     if (!activeStreams.has(streamId)) return;
 
+    // Cycle through the connection's thread hues so a blended thread
+    // sends particles of every color it carries.
+    const color = colors[index % colors.length];
+
     const particle = createParticle(
       container,
-      sourceNodeId,
-      targetNodeId,
       sourceDot,
       targetDot,
       color,
@@ -180,13 +184,16 @@ function createParticleStream(
  */
 export function startParticleStreams(
   nodeId: string,
-  nodesPx: NodePx[],
+  _nodesPx: NodePx[],
   threadElements: HTMLElement[],
   container: HTMLElement,
   dotElements: Map<string, HTMLElement>
 ): void {
   // Stop any existing streams for this node
   stopParticleStreams(nodeId);
+
+  // No particle streams under reduced-motion or on mobile.
+  if (!ambientMotionEnabled()) return;
 
   // Find threads connected to this node
   const connectedThreads = threadElements.filter(
@@ -204,14 +211,10 @@ export function startParticleStreams(
     const toDot = dotElements.get(toNodeId);
     if (!fromDot || !toDot) return;
 
-    const primaryThread = (thread.dataset.thread || 'questions') as ThreadType;
-    const palette = THREAD_PALETTES[primaryThread] || THREAD_PALETTES.questions;
-    const color = palette[0];
+    const colors = threadColors(thread);
 
     // Determine direction (particles flow from hovered node)
     const isFromHovered = fromNodeId === nodeId;
-    const sourceNodeId = isFromHovered ? fromNodeId : toNodeId;
-    const targetNodeId = isFromHovered ? toNodeId : fromNodeId;
     const sourceDot = isFromHovered ? fromDot : toDot;
     const targetDot = isFromHovered ? toDot : fromDot;
 
@@ -220,11 +223,9 @@ export function startParticleStreams(
 
     const particles = createParticleStream(
       container,
-      sourceNodeId,
-      targetNodeId,
       sourceDot,
       targetDot,
-      color,
+      colors,
       streamId
     );
     allParticles.push(...particles);

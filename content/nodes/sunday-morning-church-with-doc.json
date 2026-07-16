@@ -4,10 +4,12 @@
   "type": "essay",
   "subtype": "essay",
   "description": "Some ruminations on a Sunday morning ride.",
-  "threads": ["questions"],
+  "threads": [
+    "questions"
+  ],
   "essayFile": "sunday-morning-church-with-doc.md",
   "created": "2016-01-25",
   "visible_on_landing": true,
-  "x": 45,
-  "y": 60
+  "x": 68,
+  "y": 28
 }

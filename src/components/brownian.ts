@@ -3,6 +3,8 @@
  * Creates subtle, organic drift like dust motes in warm afternoon sun
  */
 
+import { ambientMotionEnabled } from '../utils/env';
+
 interface DotMotionState {
   nodeId: string;
   dotElement: HTMLElement;
@@ -122,6 +124,9 @@ export function initBrownianMotion(dotElements: Map<string, HTMLElement>): void 
   // Stop existing motion if any
   stopBrownianMotion();
 
+  // Respect reduced-motion and mobile: nodes stay exactly where placed.
+  if (!ambientMotionEnabled()) return;
+
   // Initialize state for each dot
   dotElements.forEach((dotElement, nodeId) => {
     // Get current position from DOM
@@ -187,6 +192,10 @@ export function pauseAllMotion(): void {
  */
 export function resumeAllMotion(): void {
   globalPaused = false;
+
+  // Nothing to animate when ambient motion is off, or when there are no
+  // registered dots (avoids an idle rAF loop spinning forever).
+  if (!ambientMotionEnabled() || dotMotions.size === 0) return;
 
   // Restart animation loop
   if (rafId === null) {

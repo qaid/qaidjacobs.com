@@ -3,14 +3,34 @@
   --bg: #f5f3ed;
   --fg: #1a1a1a;
   --muted: #6b7280;
+  /* Thread colors — vibrant (the threads carry the color) */
   --thread-music: #d946a6;
   --thread-movement: #14b8a6;
   --thread-questions: #f59e0b;
-  --thread-curiosity: #3b82f6;
-  --thread-essay: #8b5cf6;
-  --thread-durational: #ec4899;
+
+  /* Node-type colors — muted/neutral (nodes recede, threads sing) */
+  --node-essay: #6d6459;
+  --node-durational: #8a6f52;
+  --node-curiosity: #5a6472;
+  --node-bio: #4b4b4b;
+  --node-default: #6b7280;
+
   --paper: rgba(0, 0, 0, 0.04);
   --border: 1px solid rgba(0, 0, 0, 0.08);
+
+  /* z-index scale — one source of truth for stacking */
+  --z-web: 1;
+  --z-thread: 2;
+  --z-particle: 3;
+  --z-node: 4;
+  --z-phrase: 5;
+  --z-signature: 6;
+  --z-header: 10;
+  --z-nav-overlay: 20;
+  --z-container-nav: 35;
+  --z-container-nav-active: 36;
+  --z-overlay: 30;
+  --z-modal-top: 100;
 
   /* Shadows */
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -27,6 +47,7 @@
   /* Typography */
   --font-body: "Fira Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", "Menlo", monospace;
+  --font-organic: "Caveat", "Segoe Script", "Bradley Hand", cursive;
   --size-base: 16px;
   --size-sm: 0.875rem;
   --size-md: 1rem;
@@ -62,9 +83,14 @@
     --thread-music: #ff7a9e;
     --thread-movement: #4fd1c5;
     --thread-questions: #f6c56c;
-    --thread-curiosity: #60a5fa;
-    --thread-essay: #a78bfa;
-    --thread-durational: #f472b6;
+
+    /* Node-type colors — muted, slightly lifted for the dark canvas */
+    --node-essay: #b3a894;
+    --node-durational: #c2a37f;
+    --node-curiosity: #94a2b8;
+    --node-bio: #d8d8d4;
+    --node-default: #9ca3af;
+
     --paper: rgba(255, 255, 255, 0.04);
     --border: 1px solid rgba(255, 255, 255, 0.08);
 
@@ -95,9 +121,14 @@
   --thread-music: #ff7a9e;
   --thread-movement: #4fd1c5;
   --thread-questions: #f6c56c;
-  --thread-curiosity: #60a5fa;
-  --thread-essay: #a78bfa;
-  --thread-durational: #f472b6;
+
+  /* Node-type colors — muted, slightly lifted for the dark canvas */
+  --node-essay: #b3a894;
+  --node-durational: #c2a37f;
+  --node-curiosity: #94a2b8;
+  --node-bio: #d8d8d4;
+  --node-default: #9ca3af;
+
   --paper: rgba(255, 255, 255, 0.04);
   --border: 1px solid rgba(255, 255, 255, 0.08);
 

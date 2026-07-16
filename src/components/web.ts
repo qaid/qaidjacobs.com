@@ -5,7 +5,7 @@
 
 import type { Node, NodePx, Thread, ThreadType } from '../types';
 import { createElement } from '../utils/dom';
-import { get, DOT_RADIUS, THREAD_PALETTES } from '../state/store';
+import { get, THREAD_COLORS } from '../state/store';
 import { initBrownianMotion } from './brownian';
 
 // Callback types for external event handling
@@ -45,17 +45,28 @@ function createThreadLine(
 ): HTMLElement {
   const line = createElement('div', { className: 'thread' });
 
-  const primaryThread = (thread.threads?.[0] || 'questions') as ThreadType;
-  const palette = THREAD_PALETTES[primaryThread] || THREAD_PALETTES.questions;
+  // Resolve the thread hues. A connection may carry 1..n threads;
+  // we render it as a blend across all of them (general, not per-pair).
+  const threadTypes = (thread.threads?.length ? thread.threads : ['questions']) as ThreadType[];
+  const colors = threadTypes.map((t) => THREAD_COLORS[t] || THREAD_COLORS.questions);
 
+  const primaryThread = threadTypes[0];
   line.dataset.thread = primaryThread;
+  line.dataset.threads = threadTypes.join(' ');
   line.dataset.from = thread.from;
   line.dataset.to = thread.to;
 
+  // Build an evenly-spaced gradient across every thread color.
+  // Single-thread lines collapse to a solid line of one hue.
+  const stops =
+    colors.length === 1
+      ? `${colors[0]}, ${colors[0]}`
+      : colors
+          .map((c, i) => `${c} ${Math.round((i / (colors.length - 1)) * 100)}%`)
+          .join(', ');
+  line.style.setProperty('--blend', stops);
+
   line.style.setProperty('--i', String(index));
-  line.style.setProperty('--strand1', palette[0]);
-  line.style.setProperty('--strand2', palette[1]);
-  line.style.setProperty('--strand3', palette[2]);
 
   const x1 = from.center.x;
   const y1 = from.center.y;
@@ -79,41 +90,103 @@ function createThreadLine(
 /**
  * Create a node dot element
  */
+// Short, human labels per node type (what kind of thing this is).
+const TYPE_LABEL: Record<string, string> = {
+  essay: 'Essay',
+  durational: 'Listen',
+  curiosity: 'Curiosity',
+  bio: 'About',
+};
+
+function typeKind(node: NodePx): string {
+  if (node.subtype === 'dj-mix') return 'Mix';
+  if (node.subtype === 'podcast') return 'Podcast';
+  if (node.subtype === 'talk' || node.subtype === 'performance') return 'Talk';
+  return TYPE_LABEL[node.type] || 'Node';
+}
+
+// Nodes sitting on the right half of the canvas get their label to the
+// left, so text never runs off-screen. Everyone else labels to the right.
+function labelSide(node: NodePx, containerWidth: number): 'left' | 'right' {
+  return node.center.x > containerWidth * 0.62 ? 'left' : 'right';
+}
+
+/**
+ * Accessible name for a node: what kind of thing it is + its title + threads.
+ * Answers the vision's flagship test ("a pile of photos is clearly a pile of
+ * photos") for a screen-reader user who can't see the glyph.
+ */
+function accessibleName(node: NodePx): string {
+  const kind = typeKind(node);
+  const title = node.title || node.id;
+  const threads = (node.threads || []).join(', ');
+  return threads ? `${kind}: ${title}. Threads: ${threads}.` : `${kind}: ${title}.`;
+}
+
 function createNodeDot(
   node: NodePx,
   index: number,
+  containerWidth: number,
   callbacks: WebCallbacks
 ): HTMLElement {
-  const dot = createElement('div', {
-    className: 'node-dot brownian',
+  // A node is a marker (the dot/glyph) plus an always-visible label.
+  // It's a real, keyboard-operable control: role=button + tabindex, activated
+  // by click, Enter, or Space, with an accessible name describing its content.
+  const wrap = createElement('div', {
+    className: 'node',
     'data-type': node.type,
     'data-id': node.id,
+    role: 'button',
+    tabindex: '0',
+    'aria-label': accessibleName(node),
   });
 
-  dot.style.setProperty('--i', String(index));
-  dot.style.left = `${node.center.x - DOT_RADIUS}px`;
-  dot.style.top = `${node.center.y - DOT_RADIUS}px`;
+  const side = labelSide(node, containerWidth);
+  wrap.dataset.labelSide = side;
+
+  wrap.style.setProperty('--i', String(index));
+  // Position the whole node by its center (marker is centered within).
+  wrap.style.left = `${node.center.x}px`;
+  wrap.style.top = `${node.center.y}px`;
+
+  // The differentiated marker (shape/glyph per type via CSS).
+  const marker = createElement('div', { className: 'node-dot brownian' });
+  marker.dataset.type = node.type;
+  if (node.subtype) marker.dataset.subtype = node.subtype;
+
+  // The label: kind on top, title beneath.
+  const label = createElement('div', { className: 'node-label' });
+  const kindEl = createElement('span', { className: 'node-label-kind' }, [typeKind(node)]);
+  const titleEl = createElement('span', { className: 'node-label-title' }, [
+    node.title || node.id,
+  ]);
+  label.appendChild(kindEl);
+  label.appendChild(titleEl);
+
+  wrap.appendChild(marker);
+  wrap.appendChild(label);
 
   // Store original position for container mode restoration
-  dot.dataset.origLeft = dot.style.left;
-  dot.dataset.origTop = dot.style.top;
-  dot.title = node.title || node.id;
+  wrap.dataset.origLeft = wrap.style.left;
+  wrap.dataset.origTop = wrap.style.top;
+  wrap.title = node.title || node.id;
 
-  // Click handler
-  dot.addEventListener('click', () => {
-    callbacks.onClick(node);
+  wrap.addEventListener('click', () => callbacks.onClick(node));
+  wrap.addEventListener('mouseenter', () => callbacks.onHoverEnter(node));
+  wrap.addEventListener('mouseleave', () => callbacks.onHoverLeave(node));
+
+  // Keyboard: Enter/Space activate (a11y parity with a real button).
+  wrap.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      callbacks.onClick(node);
+    }
   });
+  // Focus surfaces the connected threads too, mirroring hover.
+  wrap.addEventListener('focus', () => callbacks.onHoverEnter(node));
+  wrap.addEventListener('blur', () => callbacks.onHoverLeave(node));
 
-  // Hover handlers
-  dot.addEventListener('mouseenter', () => {
-    callbacks.onHoverEnter(node);
-  });
-
-  dot.addEventListener('mouseleave', () => {
-    callbacks.onHoverLeave(node);
-  });
-
-  return dot;
+  return wrap;
 }
 
 /**
@@ -148,9 +221,10 @@ export function renderWeb(
     threadElements.push(line);
   });
 
-  // Create node dots
+  // Create node markers
+  const containerWidth = container.getBoundingClientRect().width;
   nodesPx.forEach((node, idx) => {
-    const dot = createNodeDot(node, idx, callbacks);
+    const dot = createNodeDot(node, idx, containerWidth, callbacks);
     container.appendChild(dot);
     dotElements.set(node.id, dot);
   });
