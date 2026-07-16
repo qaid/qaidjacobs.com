@@ -1,0 +1,38 @@
+{
+  "id": "beat-sketch",
+  "title": "Beat sketch",
+  "type": "artifact",
+  "subtype": "scrapbook",
+  "intro": "A loop I couldn't shake — pads, a page of scribbles, and where it landed.",
+  "threads": ["music", "movement"],
+  "created": "2026-01-10",
+  "items": [
+    {
+      "kind": "photo-stack",
+      "label": "The pads",
+      "srcs": [
+        "assets/artifacts/mpc-01.svg",
+        "assets/artifacts/mpc-02.svg",
+        "assets/artifacts/mpc-03.svg"
+      ],
+      "alt": "Drum machine pads, a page of pattern notes, and the finished waveform",
+      "note": "tap to flip through — pads, the notes, the bounce",
+      "angle": -3
+    },
+    {
+      "kind": "audio",
+      "label": "beat-sketch.wav",
+      "audio": "assets/artifacts/beat-sketch.wav",
+      "note": "four bars, 120-ish. left it raw on purpose.",
+      "angle": 2.5
+    },
+    {
+      "kind": "image",
+      "label": "Margin doodle",
+      "src": "assets/artifacts/sketch-01.svg",
+      "alt": "Ink sketch of a face in profile",
+      "note": "drew this while the loop ran.",
+      "angle": 3.5
+    }
+  ]
+}

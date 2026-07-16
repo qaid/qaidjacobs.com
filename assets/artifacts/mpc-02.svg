@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="520" viewBox="0 0 600 520" role="img" aria-label="Notebook with drum pattern scribbles">
+  <rect width="600" height="520" fill="#efe7d6"/>
+  <g stroke="#d8ccb2" stroke-width="2">
+    <line x1="40" y1="90" x2="560" y2="90"/>
+    <line x1="40" y1="150" x2="560" y2="150"/>
+    <line x1="40" y1="210" x2="560" y2="210"/>
+    <line x1="40" y1="270" x2="560" y2="270"/>
+    <line x1="40" y1="330" x2="560" y2="330"/>
+    <line x1="40" y1="390" x2="560" y2="390"/>
+  </g>
+  <g fill="#3a2f24" font-family="monospace" font-size="26">
+    <text x="52" y="80">kick . . kick . snare . .</text>
+    <text x="52" y="140">hat hat hat hat hat hat</text>
+    <text x="52" y="200">bass slides up on the 3</text>
+  </g>
+  <circle cx="470" cy="330" r="46" fill="none" stroke="#c4956a" stroke-width="4"/>
+  <text x="470" y="342" text-anchor="middle" font-family="monospace" font-size="28" fill="#c4956a">90</text>
+</svg>
