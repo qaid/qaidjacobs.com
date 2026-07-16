@@ -95,6 +95,7 @@ const TYPE_LABEL: Record<string, string> = {
   essay: 'Essay',
   durational: 'Listen',
   curiosity: 'Curiosity',
+  artifact: 'Scrapbook',
   bio: 'About',
 };
 
@@ -198,7 +199,9 @@ export function renderWeb(
 ): void {
   if (!container) return;
 
-  const nodes = get('nodes');
+  // Landing shows only curated nodes; the rest stay reachable via the nav
+  // overlay, which loads the full manifest itself.
+  const nodes = get('nodes').filter((n) => n.visible_on_landing !== false);
   const threads = get('threads');
 
   // Clear existing content
