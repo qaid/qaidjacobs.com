@@ -2,13 +2,11 @@
  * Main entry point - theme management and global container controls
  */
 
-import { getById, query } from './utils/dom';
+import { getById } from './utils/dom';
 
 // DOM elements
 const themeToggle = getById('theme-toggle');
 const yearEl = getById('year');
-const navTrigger = query<HTMLButtonElement>('.nav-trigger');
-const navOverlay = getById('nav-overlay');
 const webEl = getById('landing-web');
 const overlayEssay = getById('overlay-essay');
 
@@ -31,32 +29,6 @@ function initTheme(): void {
       localStorage.setItem('theme', newTheme);
     });
   }
-}
-
-/**
- * Initialize navigation menu
- */
-function initNav(): void {
-  if (!navTrigger || !navOverlay) return;
-
-  navTrigger.addEventListener('click', () => {
-    const isOpen = !navOverlay.hasAttribute('hidden');
-    if (isOpen) {
-      navOverlay.setAttribute('hidden', '');
-      navTrigger.setAttribute('aria-expanded', 'false');
-    } else {
-      navOverlay.removeAttribute('hidden');
-      navTrigger.setAttribute('aria-expanded', 'true');
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!navOverlay || navOverlay.hasAttribute('hidden')) return;
-    const target = e.target as Node;
-    if (navOverlay.contains(target) || navTrigger.contains(target)) return;
-    navOverlay.setAttribute('hidden', '');
-    navTrigger.setAttribute('aria-expanded', 'false');
-  });
 }
 
 /**
@@ -131,7 +103,6 @@ export { focusEssay, closeEssay };
 
 // Initialize on load
 initTheme();
-initNav();
 initConstellationLogo();
 
 if (yearEl) {

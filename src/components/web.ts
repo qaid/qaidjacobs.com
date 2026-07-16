@@ -111,6 +111,18 @@ function labelSide(node: NodePx, containerWidth: number): 'left' | 'right' {
   return node.center.x > containerWidth * 0.62 ? 'left' : 'right';
 }
 
+/**
+ * Accessible name for a node: what kind of thing it is + its title + threads.
+ * Answers the vision's flagship test ("a pile of photos is clearly a pile of
+ * photos") for a screen-reader user who can't see the glyph.
+ */
+function accessibleName(node: NodePx): string {
+  const kind = typeKind(node);
+  const title = node.title || node.id;
+  const threads = (node.threads || []).join(', ');
+  return threads ? `${kind}: ${title}. Threads: ${threads}.` : `${kind}: ${title}.`;
+}
+
 function createNodeDot(
   node: NodePx,
   index: number,
@@ -118,10 +130,15 @@ function createNodeDot(
   callbacks: WebCallbacks
 ): HTMLElement {
   // A node is a marker (the dot/glyph) plus an always-visible label.
+  // It's a real, keyboard-operable control: role=button + tabindex, activated
+  // by click, Enter, or Space, with an accessible name describing its content.
   const wrap = createElement('div', {
     className: 'node',
     'data-type': node.type,
     'data-id': node.id,
+    role: 'button',
+    tabindex: '0',
+    'aria-label': accessibleName(node),
   });
 
   const side = labelSide(node, containerWidth);
@@ -157,6 +174,17 @@ function createNodeDot(
   wrap.addEventListener('click', () => callbacks.onClick(node));
   wrap.addEventListener('mouseenter', () => callbacks.onHoverEnter(node));
   wrap.addEventListener('mouseleave', () => callbacks.onHoverLeave(node));
+
+  // Keyboard: Enter/Space activate (a11y parity with a real button).
+  wrap.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      callbacks.onClick(node);
+    }
+  });
+  // Focus surfaces the connected threads too, mirroring hover.
+  wrap.addEventListener('focus', () => callbacks.onHoverEnter(node));
+  wrap.addEventListener('blur', () => callbacks.onHoverLeave(node));
 
   return wrap;
 }

@@ -1,14 +1,11 @@
 import {
-  getById,
-  query
-} from "./main-65mq6067.js";
+  getById
+} from "./main-k51qvqm5.js";
 import"./main-3hqyeswk.js";
 
 // src/main.ts
 var themeToggle = getById("theme-toggle");
 var yearEl = getById("year");
-var navTrigger = query(".nav-trigger");
-var navOverlay = getById("nav-overlay");
 var webEl = getById("landing-web");
 var overlayEssay = getById("overlay-essay");
 function initTheme() {
@@ -24,29 +21,6 @@ function initTheme() {
       localStorage.setItem("theme", newTheme);
     });
   }
-}
-function initNav() {
-  if (!navTrigger || !navOverlay)
-    return;
-  navTrigger.addEventListener("click", () => {
-    const isOpen = !navOverlay.hasAttribute("hidden");
-    if (isOpen) {
-      navOverlay.setAttribute("hidden", "");
-      navTrigger.setAttribute("aria-expanded", "false");
-    } else {
-      navOverlay.removeAttribute("hidden");
-      navTrigger.setAttribute("aria-expanded", "true");
-    }
-  });
-  document.addEventListener("click", (e) => {
-    if (!navOverlay || navOverlay.hasAttribute("hidden"))
-      return;
-    const target = e.target;
-    if (navOverlay.contains(target) || navTrigger.contains(target))
-      return;
-    navOverlay.setAttribute("hidden", "");
-    navTrigger.setAttribute("aria-expanded", "false");
-  });
 }
 function enterContainer(detail = {}) {
   if (webEl)
@@ -93,7 +67,6 @@ function initConstellationLogo() {
   constellationLink.addEventListener("mouseleave", hide);
 }
 initTheme();
-initNav();
 initConstellationLogo();
 if (yearEl) {
   yearEl.textContent = String(new Date().getFullYear());

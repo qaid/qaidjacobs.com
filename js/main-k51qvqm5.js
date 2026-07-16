@@ -16,6 +16,9 @@ function query(selector, parent = document, cache = false) {
   }
   return parent.querySelector(selector);
 }
+function queryAll(selector, parent = document) {
+  return parent.querySelectorAll(selector);
+}
 function createElement(tag, attrs, children) {
   const el = document.createElement(tag);
   if (attrs) {
@@ -50,4 +53,4 @@ function createSVGElement(tag, attrs) {
   return el;
 }
 
-export { getById, query, createElement, createSVGElement };
+export { getById, query, queryAll, createElement, createSVGElement };

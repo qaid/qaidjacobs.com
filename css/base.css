@@ -375,3 +375,34 @@ html[data-theme="dark"] .container-card {
     padding: var(--space-6) var(--space-4);
   }
 }
+
+/* Mobile containers: fill the viewport with an opaque surface so nothing
+   bleeds through, and give the card room to scroll on small screens. */
+@media (max-width: 768px) {
+  .container-overlay {
+    padding: 0;
+  }
+  .container-overlay.container-mode .container-card {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .essay-container-wrapper {
+    width: 100vw;
+    height: 100dvh;
+  }
+  /* Opaque paper on mobile — no translucency to show the landing behind. */
+  .container-overlay.is-essay .container-card {
+    background: #f8f6f0;
+  }
+  html[data-theme="dark"] .container-overlay.is-essay .container-card {
+    background: #1a1c1e;
+  }
+  /* Keep the close button clear of any device notch. */
+  .container-close {
+    top: max(var(--space-4), env(safe-area-inset-top));
+    margin-right: max(var(--space-4), env(safe-area-inset-right));
+  }
+}

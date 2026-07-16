@@ -7,6 +7,7 @@ import type { Node, NodePx, Thread, Phrase } from './types';
 import { closeEssay, focusEssay } from './main';
 import { loadJSON } from './utils/data';
 import { getById, query } from './utils/dom';
+import { prefersReducedMotion } from './utils/env';
 import { get, set, DOT_SIZE } from './state/store';
 import {
   initPhrase,
@@ -43,6 +44,9 @@ const curiosityCentralById = new Map<string, string>();
 // Animation and state flags
 let isAnimatingContainer = false;
 let refreshCuriosityLines: (() => void) | null = null;
+// The node element that opened the current container — focus returns here on
+// close (accessibility: focus management).
+let originatingNodeEl: HTMLElement | null = null;
 
 // URL routing
 const NODE_ROUTE_PREFIX = '#/node/';
@@ -140,6 +144,18 @@ async function setOverlayContent(nodeId: string): Promise<void> {
  */
 function animateCardFromNode(nodeId: string): void {
   if (!cardEl) return;
+
+  // Reduced motion: no scale/morph FLIP — the overlay's opacity transition
+  // is the whole entrance (a crossfade). Just settle the card and finish.
+  if (prefersReducedMotion()) {
+    cardEl.style.transition = 'none';
+    cardEl.style.transform = '';
+    cardEl.style.borderRadius = '';
+    isAnimatingContainer = false;
+    if (typeof refreshCuriosityLines === 'function') refreshCuriosityLines();
+    return;
+  }
+
   const dotElements = getDotElements();
   const dot = dotElements.get(nodeId);
   if (!dot) return;
@@ -179,6 +195,29 @@ function animateCardFromNode(nodeId: string): void {
 function animateCardToNodeAndClose(nodeId: string): void {
   if (!cardEl) {
     closeEssay();
+    return;
+  }
+
+  // Reduced motion: skip the collapse-to-dot FLIP; crossfade out via the
+  // overlay opacity transition, then run the same post-close bookkeeping.
+  if (prefersReducedMotion()) {
+    isAnimatingContainer = false;
+    closeEssay();
+
+    const isNodeSwitching = get('isNodeSwitching');
+    const pendingNodeId = get('pendingNodeId');
+    if (isNodeSwitching && pendingNodeId) {
+      const targetId = pendingNodeId;
+      set('pendingNodeId', null);
+      set('isNodeSwitching', false);
+      window.setTimeout(() => focusEssay(targetId), 60);
+    } else {
+      showPhraseSlow();
+    }
+
+    cardEl.style.transition = 'none';
+    cardEl.style.transform = '';
+    cardEl.style.borderRadius = '';
     return;
   }
 
@@ -334,10 +373,20 @@ async function enterContainerMode(nodeId: string): Promise<void> {
   // Update URL
   updateUrlForNode(nodeId);
 
+  // Remember which node to return focus to on close.
+  originatingNodeEl = getDotElements().get(nodeId) || null;
+
   hidePhrase();
   await setOverlayContent(nodeId);
   applyContainerModeLayout(nodeId);
   animateCardFromNode(nodeId);
+
+  // Move focus into the opened container (accessibility: focus management).
+  // Prefer the close button so Tab order starts at a real control and Esc /
+  // Enter behave predictably.
+  window.setTimeout(() => {
+    (closeBtnEl || cardEl)?.focus?.();
+  }, 60);
 
   // Check scroll indicator after content loads
   setTimeout(() => {
@@ -370,6 +419,14 @@ function exitContainerMode(): void {
   resetDotPositions();
   resumeAllMotion();
   refreshCuriosityLines = null;
+
+  // Return focus to the node that opened the container.
+  const returnTo = originatingNodeEl;
+  originatingNodeEl = null;
+  if (returnTo) {
+    // Defer so it lands after the close animation settles.
+    window.setTimeout(() => returnTo.focus?.(), 60);
+  }
 }
 
 /**
@@ -526,6 +583,14 @@ document.addEventListener('pointerdown', (e) => {
   if (target?.closest?.('.node-dot')) return;
   if (target?.closest?.('.theme-toggle')) return;
   if (target?.closest?.('.site-header')) return;
+  requestCloseContainer();
+});
+
+// Esc closes an open container. (The nav overlay stops propagation when it
+// is the thing open, so these never collide.)
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!get('isContainerMode')) return;
   requestCloseContainer();
 });
 

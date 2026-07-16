@@ -1,25 +1,31 @@
 import {
+  ambientMotionEnabled,
+  prefersReducedMotion
+} from "./main-hnqehzpe.js";
+import {
   closeEssay,
   focusEssay
 } from "./main.js";
 import {
+  clearContainerContent,
+  getRendererForNode,
+  registerRenderer,
+  setContainerType,
+  updateContainerHeader
+} from "./curiosity-4rfym7d9.js";
+import {
   DOT_SIZE,
   THREAD_COLORS,
   THREAD_PALETTES,
-  clearContainerContent,
   get,
-  getRendererForNode,
   loadJSON,
-  registerRenderer,
-  set,
-  setContainerType,
-  updateContainerHeader
-} from "./curiosity-8fw4ba3s.js";
+  set
+} from "./main-cgea2d6s.js";
 import {
   createElement,
   getById,
   query
-} from "./main-65mq6067.js";
+} from "./main-k51qvqm5.js";
 import {
   __require,
   __toESM
@@ -127,6 +133,8 @@ function updateMotion() {
 }
 function initBrownianMotion(dotElements) {
   stopBrownianMotion();
+  if (!ambientMotionEnabled())
+    return;
   dotElements.forEach((dotElement, nodeId) => {
     const currentLeft = parseFloat(dotElement.style.left || "0");
     const currentTop = parseFloat(dotElement.style.top || "0");
@@ -167,6 +175,8 @@ function pauseAllMotion() {
 }
 function resumeAllMotion() {
   globalPaused = false;
+  if (!ambientMotionEnabled() || dotMotions.size === 0)
+    return;
   if (rafId === null) {
     rafId = requestAnimationFrame(updateMotion);
   }
@@ -239,11 +249,20 @@ function typeKind(node) {
 function labelSide(node, containerWidth) {
   return node.center.x > containerWidth * 0.62 ? "left" : "right";
 }
+function accessibleName(node) {
+  const kind = typeKind(node);
+  const title = node.title || node.id;
+  const threads = (node.threads || []).join(", ");
+  return threads ? `${kind}: ${title}. Threads: ${threads}.` : `${kind}: ${title}.`;
+}
 function createNodeDot(node, index, containerWidth, callbacks) {
   const wrap = createElement("div", {
     className: "node",
     "data-type": node.type,
-    "data-id": node.id
+    "data-id": node.id,
+    role: "button",
+    tabindex: "0",
+    "aria-label": accessibleName(node)
   });
   const side = labelSide(node, containerWidth);
   wrap.dataset.labelSide = side;
@@ -269,6 +288,14 @@ function createNodeDot(node, index, containerWidth, callbacks) {
   wrap.addEventListener("click", () => callbacks.onClick(node));
   wrap.addEventListener("mouseenter", () => callbacks.onHoverEnter(node));
   wrap.addEventListener("mouseleave", () => callbacks.onHoverLeave(node));
+  wrap.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      callbacks.onClick(node);
+    }
+  });
+  wrap.addEventListener("focus", () => callbacks.onHoverEnter(node));
+  wrap.addEventListener("blur", () => callbacks.onHoverLeave(node));
   return wrap;
 }
 function renderWeb(container, callbacks) {
@@ -448,6 +475,8 @@ function createParticleStream(container, sourceDot, targetDot, colors, streamId)
 }
 function startParticleStreams(nodeId, _nodesPx, threadElements2, container, dotElements2) {
   stopParticleStreams(nodeId);
+  if (!ambientMotionEnabled())
+    return;
   const connectedThreads = threadElements2.filter((thread) => thread.dataset.from === nodeId || thread.dataset.to === nodeId);
   const allParticles = [];
   connectedThreads.forEach((thread, idx) => {
@@ -674,6 +703,8 @@ function animateParticles() {
   animationFrameId = requestAnimationFrame(animateParticles);
 }
 function startParticles(container) {
+  if (prefersReducedMotion())
+    return;
   const particleCount = 40;
   particleStates = [];
   const rect = container.getBoundingClientRect();
@@ -786,6 +817,7 @@ var closeBtnEl = overlayEl ? query(".container-close", overlayEl) : null;
 var curiosityCentralById = new Map;
 var isAnimatingContainer = false;
 var refreshCuriosityLines = null;
+var originatingNodeEl = null;
 var NODE_ROUTE_PREFIX = "#/node/";
 function getNodeIdFromUrl() {
   const hash = window.location.hash;
@@ -838,7 +870,7 @@ async function setOverlayContent(nodeId) {
   if (renderer) {
     await renderer.render(nodeId, cardEl);
     if (node.type === "curiosity") {
-      const { getRefreshCallback } = await import("./curiosity-8fw4ba3s.js");
+      const { getRefreshCallback } = await import("./curiosity-4rfym7d9.js");
       refreshCuriosityLines = getRefreshCallback();
     }
   } else {
@@ -851,6 +883,15 @@ async function setOverlayContent(nodeId) {
 function animateCardFromNode(nodeId) {
   if (!cardEl)
     return;
+  if (prefersReducedMotion()) {
+    cardEl.style.transition = "none";
+    cardEl.style.transform = "";
+    cardEl.style.borderRadius = "";
+    isAnimatingContainer = false;
+    if (typeof refreshCuriosityLines === "function")
+      refreshCuriosityLines();
+    return;
+  }
   const dotElements2 = getDotElements();
   const dot = dotElements2.get(nodeId);
   if (!dot)
@@ -884,6 +925,24 @@ function animateCardFromNode(nodeId) {
 function animateCardToNodeAndClose(nodeId) {
   if (!cardEl) {
     closeEssay();
+    return;
+  }
+  if (prefersReducedMotion()) {
+    isAnimatingContainer = false;
+    closeEssay();
+    const isNodeSwitching = get("isNodeSwitching");
+    const pendingNodeId = get("pendingNodeId");
+    if (isNodeSwitching && pendingNodeId) {
+      const targetId = pendingNodeId;
+      set("pendingNodeId", null);
+      set("isNodeSwitching", false);
+      window.setTimeout(() => focusEssay(targetId), 60);
+    } else {
+      showPhraseSlow();
+    }
+    cardEl.style.transition = "none";
+    cardEl.style.transform = "";
+    cardEl.style.borderRadius = "";
     return;
   }
   const dotElements2 = getDotElements();
@@ -1005,10 +1064,14 @@ async function enterContainerMode(nodeId) {
   set("isContainerMode", true);
   set("activeNodeId", nodeId);
   updateUrlForNode(nodeId);
+  originatingNodeEl = getDotElements().get(nodeId) || null;
   hidePhrase();
   await setOverlayContent(nodeId);
   applyContainerModeLayout(nodeId);
   animateCardFromNode(nodeId);
+  window.setTimeout(() => {
+    (closeBtnEl || cardEl)?.focus?.();
+  }, 60);
   setTimeout(() => {
     checkScrollIndicator();
     if (cardEl) {
@@ -1029,6 +1092,11 @@ function exitContainerMode() {
   resetDotPositions();
   resumeAllMotion();
   refreshCuriosityLines = null;
+  const returnTo = originatingNodeEl;
+  originatingNodeEl = null;
+  if (returnTo) {
+    window.setTimeout(() => returnTo.focus?.(), 60);
+  }
 }
 function handleNodeClick(node) {
   if (isAnimatingContainer)
@@ -1146,6 +1214,13 @@ document.addEventListener("pointerdown", (e) => {
   if (target?.closest?.(".theme-toggle"))
     return;
   if (target?.closest?.(".site-header"))
+    return;
+  requestCloseContainer();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape")
+    return;
+  if (!get("isContainerMode"))
     return;
   requestCloseContainer();
 });

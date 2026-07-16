@@ -8,6 +8,7 @@ import type { DurationalData, DurationalMedia } from '../types';
 import { clearContainerContent, updateContainerHeader, registerRenderer } from './base';
 import { loadJSON } from '../utils/data';
 import { createElement } from '../utils/dom';
+import { prefersReducedMotion } from '../utils/env';
 
 // Particle state
 interface ParticleState {
@@ -234,6 +235,10 @@ function animateParticles(): void {
  * Start lazy drifting particles with even distribution
  */
 function startParticles(container: HTMLElement): void {
+  // Brownian particle background is atmosphere, not information — skip it
+  // entirely when the user asked for reduced motion.
+  if (prefersReducedMotion()) return;
+
   const particleCount = 40;
   particleStates = [];
 

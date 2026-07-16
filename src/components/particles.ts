@@ -7,6 +7,7 @@ import type { NodePx, ThreadType } from '../types';
 import { createElement } from '../utils/dom';
 import { easeInOutQuad } from '../utils/animation';
 import { THREAD_PALETTES } from '../state/store';
+import { ambientMotionEnabled } from '../utils/env';
 
 // Resolve the ordered list of thread hues a connection carries.
 function threadColors(thread: HTMLElement): string[] {
@@ -190,6 +191,9 @@ export function startParticleStreams(
 ): void {
   // Stop any existing streams for this node
   stopParticleStreams(nodeId);
+
+  // No particle streams under reduced-motion or on mobile.
+  if (!ambientMotionEnabled()) return;
 
   // Find threads connected to this node
   const connectedThreads = threadElements.filter(
