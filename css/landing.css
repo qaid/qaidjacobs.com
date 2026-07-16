@@ -38,11 +38,17 @@ body.phrase-fade-in .phrase {
 
 .phrase-text {
   display: block;
+  opacity: 0;
+  transition: opacity 200ms ease;
   font-size: clamp(1.4rem, 3.4vw, 1.9rem);
   font-weight: 600;
   letter-spacing: -0.01em;
   text-shadow: 0 1px 2px var(--bg), 0 2px 14px var(--bg);
   margin-bottom: 0.15rem;
+}
+
+.phrase-text.is-populated {
+  opacity: 1;
 }
 
 .phrase-by {

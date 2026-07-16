@@ -36,9 +36,12 @@ jobs:
         run: |
           mkdir -p _site
           cp -r index.html favicon.ico css js assets content CNAME .nojekyll _site/
-          # Copy README and LICENSE if they exist
-          [ -f README.md ] && cp README.md _site/ || true
-          [ -f LICENSE ] && cp LICENSE _site/ || true
+          [ -f favicon.svg ] && cp favicon.svg _site/ || true
+          [ -f favicon-96x96.png ] && cp favicon-96x96.png _site/ || true
+          [ -f apple-touch-icon.png ] && cp apple-touch-icon.png _site/ || true
+          [ -d node ] && cp -r node _site/ || true
+          [ -f robots.txt ] && cp robots.txt _site/ || true
+          [ -f sitemap.xml ] && cp sitemap.xml _site/ || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

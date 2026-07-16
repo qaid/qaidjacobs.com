@@ -53,6 +53,7 @@ export function rotatePhrase(phrases: Phrase[]): void {
   currentPhraseBy = next.by ? `— ${next.by}` : '';
 
   phraseTextEl.textContent = currentPhraseText;
+  phraseTextEl.classList.add('is-populated');
 
   if (phraseByEl) {
     phraseByEl.textContent = currentPhraseBy;

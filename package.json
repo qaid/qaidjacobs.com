@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "generate-manifest": "node scripts/generate-manifest.js",
+    "generate-pages": "node scripts/generate-pages.js",
     "typecheck": "bun x tsc --noEmit",
     "build:ts": "rm -f js/*.js && bun build src/main.ts src/landing.ts src/navigation.ts --outdir=js --format=esm --splitting && (sed -i '' '$ { /^export { focusEssay, closeEssay };$/d; }' js/main.js 2>/dev/null || sed -i '$ { /^export { focusEssay, closeEssay };$/d; }' js/main.js)",
     "predev": "npm run build",
     "dev": "bunx serve . --listen 3000",
-    "build": "npm run generate-manifest && npm run build:ts",
+    "build": "npm run generate-manifest && npm run generate-pages && npm run build:ts",
     "lint": "npm run typecheck",
     "cms:dev": "bun run cms/server/index.ts",
     "cms:start": "bun run cms/server/index.ts",
