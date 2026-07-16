@@ -9,12 +9,13 @@ import {
   clearContainerContent,
   get,
   getRendererForNode,
+  hashStringToInt,
   loadJSON,
   registerRenderer,
   set,
   setContainerType,
   updateContainerHeader
-} from "./curiosity-4vn8p1s8.js";
+} from "./curiosity-4t25jvrj.js";
 import {
   createElement,
   getById,
@@ -346,7 +347,7 @@ function getCurrentDotPosition(dotElement) {
     y: top + DOT_RADIUS2
   };
 }
-function createParticle(container, sourceNodeId, targetNodeId, sourceDot, targetDot, color, streamId, index, onComplete) {
+function createParticle(container, _sourceNodeId, _targetNodeId, sourceDot, targetDot, color, streamId, index, onComplete) {
   const particle = createElement("div", { className: "particle" });
   particle.style.background = color;
   particle.style.boxShadow = `0 0 4px ${color}, 0 0 2px ${color}`;
@@ -432,7 +433,7 @@ function createParticleStream(container, sourceNodeId, targetNodeId, sourceDot, 
   }
   return particles;
 }
-function startParticleStreams(nodeId, nodesPx, threadElements2, container, dotElements2) {
+function startParticleStreams(nodeId, _nodesPx, threadElements2, container, dotElements2) {
   stopParticleStreams(nodeId);
   const connectedThreads = threadElements2.filter((thread) => thread.dataset.from === nodeId || thread.dataset.to === nodeId);
   const allParticles = [];
@@ -698,6 +699,155 @@ registerRenderer("dj-mix", durationalRenderer);
 registerRenderer("talk", durationalRenderer);
 registerRenderer("podcast", durationalRenderer);
 
+// src/containers/artifacts.ts
+function seededUnit(seed) {
+  return hashStringToInt(seed) % 1000 / 500 - 1;
+}
+function resolveAngle(item, seed) {
+  if (typeof item.angle === "number")
+    return item.angle;
+  return seededUnit(seed) * 4.5;
+}
+function createNote(text, seed) {
+  const note = createElement("p", { className: "artifact-note" }, [text]);
+  note.style.setProperty("--note-angle", `${seededUnit(`${seed}-note`) * 3}deg`);
+  return note;
+}
+function createPhotoStack(item, seed) {
+  const srcs = (item.srcs && item.srcs.length ? item.srcs : item.src ? [item.src] : []).slice(0, 8);
+  const stack = createElement("button", {
+    type: "button",
+    className: "artifact-photo-stack",
+    "aria-label": `${item.label || "Photo stack"} — ${srcs.length} photos, activate to shuffle`
+  });
+  let order = srcs.map((_, i) => i);
+  const layers = srcs.map((src, i) => {
+    const img = createElement("img", {
+      className: "artifact-photo",
+      src,
+      alt: item.alt || item.label || `Photo ${i + 1}`,
+      loading: "lazy",
+      draggable: "false"
+    });
+    img.style.setProperty("--layer-angle", `${seededUnit(`${seed}-${i}`) * 6}deg`);
+    img.style.setProperty("--layer-x", `${seededUnit(`${seed}-x${i}`) * 10}px`);
+    img.style.setProperty("--layer-y", `${seededUnit(`${seed}-y${i}`) * 10}px`);
+    return img;
+  });
+  function paint() {
+    order.forEach((layerIdx, depth) => {
+      const img = layers[layerIdx];
+      img.style.zIndex = String(depth);
+      const isTop = depth === order.length - 1;
+      img.style.opacity = isTop ? "1" : String(0.82 - (order.length - 1 - depth) * 0.06);
+      img.classList.toggle("is-top", isTop);
+    });
+  }
+  function shuffle() {
+    if (order.length < 2)
+      return;
+    const top = order[order.length - 1];
+    order = [top, ...order.slice(0, order.length - 1)];
+    layers[top].classList.add("is-flipping");
+    window.setTimeout(() => layers[top].classList.remove("is-flipping"), 260);
+    paint();
+  }
+  layers.forEach((img) => stack.appendChild(img));
+  paint();
+  if (srcs.length > 1) {
+    stack.addEventListener("click", shuffle);
+  } else {
+    stack.classList.add("is-single");
+  }
+  if (srcs.length > 1) {
+    const badge = createElement("span", { className: "artifact-stack-count", "aria-hidden": "true" }, [
+      String(srcs.length)
+    ]);
+    stack.appendChild(badge);
+  }
+  return stack;
+}
+function createImage(item, seed) {
+  const frame = createElement("div", { className: "artifact-image" });
+  const img = createElement("img", {
+    className: "artifact-photo is-top",
+    src: item.src || "",
+    alt: item.alt || item.label || "Artifact",
+    loading: "lazy",
+    draggable: "false"
+  });
+  img.style.setProperty("--layer-angle", "0deg");
+  img.style.setProperty("--layer-x", "0px");
+  img.style.setProperty("--layer-y", "0px");
+  frame.appendChild(img);
+  return frame;
+}
+function createAudio(item) {
+  const wrap = createElement("div", { className: "artifact-audio" });
+  if (item.label) {
+    wrap.appendChild(createElement("span", { className: "artifact-audio-label" }, [item.label]));
+  }
+  const audio = createElement("audio", {
+    className: "artifact-audio-el",
+    controls: "",
+    preload: "none",
+    src: item.audio || ""
+  });
+  wrap.appendChild(audio);
+  return wrap;
+}
+function createItem(item, idx) {
+  const seed = `${item.label || item.src || item.audio || "item"}-${idx}`;
+  const cell = createElement("div", { className: `artifact-item is-${item.kind}` });
+  cell.style.setProperty("--tilt", `${resolveAngle(item, seed)}deg`);
+  let media;
+  switch (item.kind) {
+    case "photo-stack":
+      media = createPhotoStack(item, seed);
+      break;
+    case "audio":
+      media = createAudio(item);
+      break;
+    case "image":
+    default:
+      media = createImage(item, seed);
+      break;
+  }
+  cell.appendChild(media);
+  if (item.note) {
+    cell.appendChild(createNote(item.note, seed));
+  }
+  return cell;
+}
+var artifactsRenderer = {
+  async render(nodeId, cardEl) {
+    clearContainerContent(cardEl);
+    let data;
+    try {
+      data = await loadJSON(`content/artifacts/${nodeId}.json`);
+    } catch (e) {
+      console.error("Failed to load artifact data:", e);
+      return;
+    }
+    const content = createElement("div", { className: "artifacts-content" });
+    if (data.intro) {
+      content.appendChild(createElement("p", { className: "artifacts-intro" }, [data.intro]));
+    }
+    const board = createElement("div", { className: "artifacts-board" });
+    const items = Array.isArray(data.items) ? data.items : [];
+    items.forEach((item, idx) => board.appendChild(createItem(item, idx)));
+    content.appendChild(board);
+    updateContainerHeader(cardEl, {
+      eyebrow: data.subtype || "scrapbook",
+      title: data.title || nodeId,
+      lede: ""
+    });
+    cardEl.appendChild(content);
+  },
+  cleanup() {}
+};
+registerRenderer("artifact", artifactsRenderer);
+
 // src/landing.ts
 var webEl = getById("landing-web");
 var overlayEl = getById("overlay-essay");
@@ -758,7 +908,7 @@ async function setOverlayContent(nodeId) {
   if (renderer) {
     await renderer.render(nodeId, cardEl);
     if (node.type === "curiosity") {
-      const { getRefreshCallback } = await import("./curiosity-4vn8p1s8.js");
+      const { getRefreshCallback } = await import("./curiosity-4t25jvrj.js");
       refreshCuriosityLines = getRefreshCallback();
     }
   } else {

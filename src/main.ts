@@ -205,7 +205,7 @@ function initConstellationLogo(): void {
   });
 
   // On logo hover enter - stop fade and show at full opacity
-  constellationLink.addEventListener('mouseenter', (e) => {
+  constellationLink.addEventListener('mouseenter', () => {
     // Only respond if link is actually clickable
     const currentOpacity = getCurrentOpacity(constellationLink);
     if (currentOpacity < CLICKABLE_THRESHOLD) return;

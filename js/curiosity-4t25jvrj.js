@@ -20,6 +20,9 @@ function clearContainerContent(cardEl) {
   const durationalContent = query(".durational-content", cardEl);
   if (durationalContent)
     durationalContent.remove();
+  const artifactsContent = query(".artifacts-content", cardEl);
+  if (artifactsContent)
+    artifactsContent.remove();
 }
 function updateContainerHeader(cardEl, options) {
   const eyebrowEl = query(".eyebrow", cardEl);
@@ -46,9 +49,11 @@ function setContainerType(overlayEl, node) {
   const isEssay = node.subtype === "essay" || node.type === "essay";
   const isCuriosity = node.type === "curiosity";
   const isDurational = node.type === "durational" || node.subtype === "dj-mix" || node.subtype === "talk" || node.subtype === "podcast";
+  const isArtifact = node.type === "artifact";
   overlayEl.classList.toggle("is-essay", isEssay);
   overlayEl.classList.toggle("is-curiosity", isCuriosity);
   overlayEl.classList.toggle("is-durational", isDurational);
+  overlayEl.classList.toggle("is-artifact", isArtifact);
 }
 function getRendererForNode(node) {
   if (node.subtype && renderers.has(node.subtype)) {
@@ -246,4 +251,4 @@ export {
   curiosityRenderer
 };
 
-export { loadJSON, DOT_SIZE, DOT_RADIUS, THREAD_PALETTES, get, set, registerRenderer, clearContainerContent, updateContainerHeader, setContainerType, getRendererForNode };
+export { loadJSON, hashStringToInt, DOT_SIZE, DOT_RADIUS, THREAD_PALETTES, get, set, registerRenderer, clearContainerContent, updateContainerHeader, setContainerType, getRendererForNode };

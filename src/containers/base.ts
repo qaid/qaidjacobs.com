@@ -45,6 +45,10 @@ export function clearContainerContent(cardEl: HTMLElement): void {
   // Remove durational content
   const durationalContent = query('.durational-content', cardEl);
   if (durationalContent) durationalContent.remove();
+
+  // Remove artifacts content
+  const artifactsContent = query('.artifacts-content', cardEl);
+  if (artifactsContent) artifactsContent.remove();
 }
 
 /**
@@ -97,10 +101,12 @@ export function setContainerType(
     node.subtype === 'dj-mix' ||
     node.subtype === 'talk' ||
     node.subtype === 'podcast';
+  const isArtifact = node.type === 'artifact';
 
   overlayEl.classList.toggle('is-essay', isEssay);
   overlayEl.classList.toggle('is-curiosity', isCuriosity);
   overlayEl.classList.toggle('is-durational', isDurational);
+  overlayEl.classList.toggle('is-artifact', isArtifact);
 }
 
 /**

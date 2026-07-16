@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480" role="img" aria-label="Beat sketch, pads lit">
+  <rect width="640" height="480" fill="#2b2622"/>
+  <rect x="60" y="60" width="520" height="360" rx="18" fill="#39322c"/>
+  <g fill="#c4956a">
+    <rect x="96" y="96" width="120" height="120" rx="10"/>
+    <rect x="260" y="96" width="120" height="120" rx="10" fill="#8a6b4d"/>
+    <rect x="424" y="96" width="120" height="120" rx="10"/>
+    <rect x="96" y="260" width="120" height="120" rx="10" fill="#8a6b4d"/>
+    <rect x="260" y="260" width="120" height="120" rx="10"/>
+    <rect x="424" y="260" width="120" height="120" rx="10" fill="#d4a574"/>
+  </g>
+  <text x="320" y="452" text-anchor="middle" font-family="monospace" font-size="20" fill="#8a7a68">pads · take 1</text>
+</svg>

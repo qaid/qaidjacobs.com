@@ -142,7 +142,7 @@ function initConstellationLogo() {
     const currentOpacity = getCurrentOpacity(constellationLink);
     animateLogoFade(constellationLink, currentOpacity);
   });
-  constellationLink.addEventListener("mouseenter", (e) => {
+  constellationLink.addEventListener("mouseenter", () => {
     const currentOpacity = getCurrentOpacity(constellationLink);
     if (currentOpacity < CLICKABLE_THRESHOLD)
       return;

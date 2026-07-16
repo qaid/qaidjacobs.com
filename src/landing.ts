@@ -32,6 +32,7 @@ import { getRendererForNode, clearContainerContent, setContainerType } from './c
 import './containers/essay';
 import './containers/curiosity';
 import './containers/durational';
+import './containers/artifacts';
 
 // DOM elements
 const webEl = getById('landing-web');
