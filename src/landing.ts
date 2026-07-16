@@ -114,6 +114,7 @@ async function setOverlayContent(nodeId: string): Promise<void> {
 
   if (eyebrow) eyebrow.textContent = node.type ? `Container: ${node.type}` : 'Container';
   if (titleEl) titleEl.textContent = node.title || node.id;
+  document.title = `${node.title || node.id} — Qa'id Jacobs`;
 
   // Set container type classes
   setContainerType(overlayEl, node);
@@ -356,6 +357,7 @@ async function enterContainerMode(nodeId: string): Promise<void> {
 function exitContainerMode(): void {
   set('isContainerMode', false);
   set('activeNodeId', null);
+  document.title = 'Qaid Jacobs';
 
   // Update URL
   updateUrlForNode(null);

@@ -41,11 +41,17 @@ html[data-theme="dark"] .phrase > div {
 
 .phrase-text {
   display: block;
+  opacity: 0;
+  transition: opacity 200ms ease;
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 600;
   letter-spacing: -0.01em;
   text-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
   margin-bottom: 0.25rem;
+}
+
+.phrase-text.is-populated {
+  opacity: 1;
 }
 
 .phrase-by {

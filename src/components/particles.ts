@@ -34,8 +34,8 @@ function getCurrentDotPosition(dotElement: HTMLElement): { x: number; y: number 
  */
 function createParticle(
   container: HTMLElement,
-  sourceNodeId: string,
-  targetNodeId: string,
+  _sourceNodeId: string,
+  _targetNodeId: string,
   sourceDot: HTMLElement,
   targetDot: HTMLElement,
   color: string,
@@ -180,7 +180,7 @@ function createParticleStream(
  */
 export function startParticleStreams(
   nodeId: string,
-  nodesPx: NodePx[],
+  _nodesPx: NodePx[],
   threadElements: HTMLElement[],
   container: HTMLElement,
   dotElements: Map<string, HTMLElement>
