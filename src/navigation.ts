@@ -20,7 +20,7 @@ import type { Node, Thread, ThreadType } from './types';
 import { focusEssay } from './main';
 import { loadJSON } from './utils/data';
 import { getById, queryAll, createElement } from './utils/dom';
-import { THREAD_COLORS } from './state/store';
+import { THREAD_COLORS, get } from './state/store';
 import { isMobile, onEnvChange } from './utils/env';
 
 // Edge-hover activation band (spec: 48px from left/right/bottom).
@@ -233,6 +233,15 @@ function processPointer(): void {
   pointerRaf = 0;
   if (isMobile()) return;
 
+  // Never summon the map while a node-detail container is open. The container
+  // owns the screen; an edge-hover overlay must not appear over or behind it.
+  // (Also guards the case where the pointer drifts to an edge as a container
+  // opens.) Re-arm so hover works again the moment the container closes.
+  if (get('isContainerMode') || document.body.classList.contains('container-mode')) {
+    armed = true;
+    return;
+  }
+
   const inZone = inEdgeZone(pendingX, pendingY);
 
   // Re-arm once the pointer has left every edge zone. This prevents an
@@ -289,6 +298,12 @@ function initNavigation(): void {
       e.stopPropagation();
       close();
     }
+  });
+
+  // If a node-detail container opens while the map overlay is showing, dismiss
+  // the overlay — the two full-screen surfaces must never coexist.
+  window.addEventListener('container:open', () => {
+    if (isOpen) close();
   });
 
   // Desktop edge-hover.

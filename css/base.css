@@ -257,6 +257,30 @@ html[data-theme="dark"] .constellation-logo-dark {
   margin-bottom: var(--space-2);
 }
 
+/* ---- Container card header band ----
+   The node-type label (eyebrow) reads as its own header band: it is vertically
+   centered within a fixed-height strip that also holds the close button, then a
+   divider separates that band from the title + body. This keeps the eyebrow off
+   the divider and guarantees the title sits fully below it (bugs: eyebrow not
+   centered; title straddling the divider). */
+.container-overlay .container-card > .eyebrow {
+  margin: 0;
+  min-height: 44px; /* matches the close button so the band is balanced */
+  display: flex;
+  align-items: center;      /* vertically center the label in the band */
+  padding-right: 56px;      /* clear the close button pinned top-right */
+  border-bottom: var(--border);
+  padding-bottom: var(--space-4);
+}
+
+/* Title belongs to the body region: clear separation below the divider. */
+.container-overlay .container-card > .eyebrow + h2 {
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-2);
+  font-size: clamp(1.5rem, 3.2vw, 2rem);
+  line-height: 1.2;
+}
+
 .lede {
   color: var(--muted);
   margin-top: var(--space-3);
@@ -302,6 +326,19 @@ html[data-theme="dark"] .container-overlay {
   height: min(78vh, 780px);
   overflow: auto;
   pointer-events: auto;
+  /* Extra bottom room so the last line / scroll hint never crowds the card
+     edge, and the card as a whole keeps clearance from the footer logo. */
+  padding-bottom: var(--space-8);
+}
+
+/* In container mode the footer (© line + Constellation Design logo) must not
+   intersect the open card. The footer already lives quietly behind everything;
+   here we take it fully out of play so a header-hover fade-in can't surface the
+   logo across the card's bottom edge. */
+body.container-mode .site-footer {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden;
 }
 
 .container-overlay.is-essay .container-card {

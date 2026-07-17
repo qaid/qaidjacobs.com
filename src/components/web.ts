@@ -136,9 +136,30 @@ function createNodeDot(
       }
     });
   }
-  // Focus surfaces the connected threads too, mirroring hover.
-  wrap.addEventListener('focus', () => callbacks.onHoverEnter(node));
-  wrap.addEventListener('blur', () => callbacks.onHoverLeave(node));
+  // Focus surfaces the connected threads too, mirroring hover — but ONLY for
+  // keyboard focus. A pointer click also focuses the node; if we ran the
+  // hover-enter pause path on every focus, a click would fire focus (pause)
+  // while `mouseleave` fires the resume, leaving the paused-on-focus state
+  // stranded until the next blur — and for the inert bio node this froze the
+  // web on click. `:focus-visible` matches keyboard focus (and never a mouse
+  // click), giving a11y parity with hover for keyboard users without letting a
+  // pointer click leak a persistent pause.
+  wrap.addEventListener('focus', () => {
+    if (wrap.matches(':focus-visible')) {
+      wrap.dataset.focusActive = 'true';
+      callbacks.onHoverEnter(node);
+    }
+  });
+  wrap.addEventListener('blur', () => {
+    // Only mirror the leave when a focus-driven enter actually ran. If the node
+    // isn't marked focus-active, this blur pairs with a pointer focus that
+    // never paused, so resuming here would be a spurious (harmless) no-op —
+    // but guarding keeps the enter/leave calls balanced.
+    if (wrap.dataset.focusActive === 'true') {
+      delete wrap.dataset.focusActive;
+      callbacks.onHoverLeave(node);
+    }
+  });
 
   return wrap;
 }

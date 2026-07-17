@@ -7,6 +7,7 @@ import {
 } from "./main.js";
 import {
   THREAD_COLORS,
+  get,
   loadJSON
 } from "./main-cgea2d6s.js";
 import {
@@ -161,6 +162,10 @@ function processPointer() {
   pointerRaf = 0;
   if (isMobile())
     return;
+  if (get("isContainerMode") || document.body.classList.contains("container-mode")) {
+    armed = true;
+    return;
+  }
   const inZone = inEdgeZone(pendingX, pendingY);
   if (!inZone) {
     armed = true;
@@ -198,6 +203,10 @@ function initNavigation() {
       e.stopPropagation();
       close();
     }
+  });
+  window.addEventListener("container:open", () => {
+    if (isOpen)
+      close();
   });
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   onEnvChange(() => {
