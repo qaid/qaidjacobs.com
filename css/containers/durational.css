@@ -51,29 +51,37 @@
   min-height: 400px;
 }
 
-/* Durational warmth: an ambient wash of the accent hue over the card, bled
-   from the edges inward. Its strength rises and falls with playback via
-   --durational-intensity, so the "trendy brunch" glow is perceptibly warmer
-   at mid-track peak than at rest — subtle, atmospheric, never orange.
-   Sits behind the player and particles (negative margin fills the card's
-   own padding so the wash reaches the card edges). */
+/* Durational warmth: an ambient wash of the accent hue behind the player,
+   bled to the card's side/bottom edges. Its strength rises and falls with
+   playback via --durational-intensity, so the "trendy brunch" glow is
+   perceptibly warmer at mid-track peak than at rest — subtle, atmospheric,
+   never orange.
+
+   Geometry note: the wash is clipped to the .durational-content region (which
+   begins BELOW the header row + title) and its top radial is anchored well
+   inside that region with a soft fade, so it never paints a hard edge across
+   the title. Negative side/bottom insets bleed it to the card edges; the TOP
+   inset is 0 so the wash starts at the content top, not up in the title. */
 .durational-content::before {
   content: "";
   position: absolute;
-  inset: calc(-1 * var(--space-6));
+  top: 0;
+  left: calc(-1 * var(--space-6));
+  right: calc(-1 * var(--space-6));
+  bottom: calc(-1 * var(--space-6));
   pointer-events: none;
   z-index: 0;
   border-radius: inherit;
   background:
     radial-gradient(
-      120% 90% at 50% 0%,
-      rgba(196, 149, 106, calc(0.16 + 0.30 * var(--durational-intensity))),
-      transparent 68%
+      140% 80% at 50% 12%,
+      rgba(196, 149, 106, calc(0.14 + 0.28 * var(--durational-intensity))),
+      transparent 72%
     ),
     radial-gradient(
-      120% 90% at 50% 100%,
+      140% 80% at 50% 100%,
       rgba(196, 149, 106, calc(0.10 + 0.22 * var(--durational-intensity))),
-      transparent 66%
+      transparent 70%
     );
   transition: background 700ms ease;
 }

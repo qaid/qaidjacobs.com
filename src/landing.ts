@@ -235,14 +235,23 @@ function animateCardToNodeAndClose(nodeId: string): void {
   const from = cardEl.getBoundingClientRect();
 
   isAnimatingContainer = true;
-  cardEl.style.transformOrigin = 'top left';
-  cardEl.style.transition = 'transform 420ms ease, border-radius 420ms ease';
-  cardEl.style.borderRadius = '999px';
-  cardEl.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${Math.max(0.01, to.width / from.width)}, ${Math.max(0.01, to.height / from.height)})`;
 
-  const onEnd = (e: TransitionEvent) => {
-    if (e.propertyName !== 'transform' || !cardEl) return;
-    cardEl.removeEventListener('transitionend', onEnd);
+  // Timeline:
+  //   0ms    : content fades out (.is-closing → children opacity 0, 150ms)
+  //   ~120ms : card shell begins scaling + fading toward the origin dot
+  //   ~560ms : scale/fade done → tear down (remove classes, reset styles)
+  // Fading the content first means nothing smears while the card shrinks; the
+  // shell's opacity accompanies its transform so the collapse is one smooth
+  // scale+fade, and no classes are removed until the card is fully hidden.
+  const CONTENT_FADE = 150;
+  const SCALE_DUR = 440;
+  const SCALE_DELAY = 120;
+
+  // Kick off the content fade immediately.
+  cardEl.classList.add('is-closing');
+
+  const finish = (): void => {
+    if (!cardEl) return;
     isAnimatingContainer = false;
     closeEssay();
 
@@ -255,20 +264,52 @@ function animateCardToNodeAndClose(nodeId: string): void {
       window.setTimeout(() => {
         set('isNodeSwitching', false);
         focusEssay(targetId);
-      }, 420);
+      }, 60);
     } else {
       showPhraseSlow();
     }
 
-    window.setTimeout(() => {
-      if (!cardEl) return;
-      cardEl.style.transition = 'none';
-      cardEl.style.transform = '';
-      cardEl.style.borderRadius = '';
-      cardEl.style.transition = '';
-    }, 260);
+    // Reset all inline animation styles only now that the card is hidden, so no
+    // property snaps back into view mid-fade.
+    cardEl.style.transition = 'none';
+    cardEl.style.transform = '';
+    cardEl.style.borderRadius = '';
+    cardEl.style.opacity = '';
+    cardEl.classList.remove('is-closing');
+    // Force the reset to commit before transitions are re-enabled next open.
+    cardEl.getBoundingClientRect();
+    cardEl.style.transition = '';
+  };
+
+  // After the content has begun fading, scale + fade the shell to the dot.
+  window.setTimeout(() => {
+    if (!cardEl) return;
+    cardEl.style.transformOrigin = 'top left';
+    cardEl.style.transition =
+      `transform ${SCALE_DUR}ms ease, border-radius ${SCALE_DUR}ms ease, opacity ${SCALE_DUR}ms ease`;
+    cardEl.style.borderRadius = '999px';
+    cardEl.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${Math.max(0.01, to.width / from.width)}, ${Math.max(0.01, to.height / from.height)})`;
+    // Shell opacity accompanies the transform: fades as it shrinks so the
+    // collapse is one smooth scale+fade rather than a hard cut.
+    cardEl.style.opacity = '0';
+  }, SCALE_DELAY);
+
+  // Drive teardown off the transform transitionend, with a timeout fallback so
+  // a missed event can never strand the overlay open.
+  let done = false;
+  const onEnd = (e: TransitionEvent): void => {
+    if (e.propertyName !== 'transform' || done || !cardEl) return;
+    done = true;
+    cardEl.removeEventListener('transitionend', onEnd);
+    finish();
   };
   cardEl.addEventListener('transitionend', onEnd);
+  window.setTimeout(() => {
+    if (done || !cardEl) return;
+    done = true;
+    cardEl.removeEventListener('transitionend', onEnd);
+    finish();
+  }, CONTENT_FADE + SCALE_DELAY + SCALE_DUR + 80);
 }
 
 /**

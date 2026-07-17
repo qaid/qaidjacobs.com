@@ -257,25 +257,32 @@ html[data-theme="dark"] .constellation-logo-dark {
   margin-bottom: var(--space-2);
 }
 
-/* ---- Container card header band ----
-   The node-type label (eyebrow) reads as its own header band: it is vertically
-   centered within a fixed-height strip that also holds the close button, then a
-   divider separates that band from the title + body. This keeps the eyebrow off
-   the divider and guarantees the title sits fully below it (bugs: eyebrow not
-   centered; title straddling the divider). */
-.container-overlay .container-card > .eyebrow {
-  margin: 0;
-  min-height: 44px; /* matches the close button so the band is balanced */
+/* ---- Container card header row ----
+   A real header row pins to the top of the card: the node-type label (eyebrow)
+   sits at the left, the close button at the right, both vertically centered in
+   the same row, with a clean divider under the whole row. The title lives below
+   the divider with comfortable spacing so it never straddles anything. Applies
+   to every container type (essay, durational, podcast, artifact, curiosity). */
+.container-overlay .container-card > .container-header {
   display: flex;
-  align-items: center;      /* vertically center the label in the band */
-  padding-right: 56px;      /* clear the close button pinned top-right */
-  border-bottom: var(--border);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;         /* matches the close button so the row is balanced */
+  margin: 0 0 var(--space-6);
   padding-bottom: var(--space-4);
+  border-bottom: var(--border);
 }
 
-/* Title belongs to the body region: clear separation below the divider. */
-.container-overlay .container-card > .eyebrow + h2 {
-  margin-top: var(--space-6);
+/* Eyebrow inside the header row: no band, no divider of its own — it is just
+   the label, vertically centered by the row's flex alignment. */
+.container-overlay .container-card > .container-header > .eyebrow {
+  margin: 0;
+}
+
+/* Title belongs to the body region below the divider: clear separation. */
+.container-overlay .container-card > .container-header + h2 {
+  margin-top: 0;
   margin-bottom: var(--space-2);
   font-size: clamp(1.5rem, 3.2vw, 2rem);
   line-height: 1.2;
@@ -369,6 +376,28 @@ html[data-theme="dark"] .container-card {
   background: rgba(13, 14, 15, 0.92);
 }
 
+/* ---- Smooth close ----
+   On close the card's CONTENT fades out first (fast), so nothing smears while
+   the card shrinks toward its origin node. The card SHELL (background/border/
+   shadow) then scales + fades together, driven from JS. These durations pair
+   with the JS timeline in animateCardToNodeAndClose. */
+.container-card.is-closing > * {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+/* The card shell's opacity is animated from JS (paired with the transform) so
+   the collapse reads as a single smooth scale+fade, never a one-frame vanish.
+   No shell opacity is set here on purpose — see animateCardToNodeAndClose. */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Reduced motion: crossfade only — no per-child content fade timing, the
+     overlay opacity transition carries the whole exit. */
+  .container-card.is-closing > * {
+    transition: none;
+  }
+}
+
 .container-overlay.is-curiosity.container-mode .container-card {
   overflow: hidden;
   display: flex;
@@ -377,12 +406,10 @@ html[data-theme="dark"] .container-card {
 }
 
 .container-close {
-  position: sticky;
-  top: var(--space-4);
-  left: 100%;
+  /* Lives inside the header row (see .container-header). margin-left:auto keeps
+     it pinned right even when the eyebrow is hidden (curiosity). */
+  flex: 0 0 auto;
   margin-left: auto;
-  margin-right: var(--space-4);
-  margin-bottom: calc(-40px - var(--space-4));
   width: 40px;
   height: 40px;
   border-radius: 999px;
@@ -437,9 +464,8 @@ html[data-theme="dark"] .container-card {
   html[data-theme="dark"] .container-overlay.is-essay .container-card {
     background: #1a1c1e;
   }
-  /* Keep the close button clear of any device notch. */
-  .container-close {
-    top: max(var(--space-4), env(safe-area-inset-top));
-    margin-right: max(var(--space-4), env(safe-area-inset-right));
+  /* Keep the header row (and its close button) clear of any device notch. */
+  .container-overlay .container-card > .container-header {
+    padding-top: env(safe-area-inset-top);
   }
 }
