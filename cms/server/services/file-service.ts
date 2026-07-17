@@ -61,7 +61,7 @@ export async function createBackup(filePath: string): Promise<BackupInfo> {
  * Atomic write - write to temp file then rename
  */
 async function atomicWrite(filePath: string, content: string): Promise<void> {
-  const tempPath = `${filePath}.tmp`;
+  const tempPath = `${filePath}.${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`;
   try {
     await Bun.write(tempPath, content);
     await rename(tempPath, filePath);

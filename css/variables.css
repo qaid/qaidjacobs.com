@@ -20,7 +20,6 @@
 
   /* z-index scale — one source of truth for stacking */
   --z-web: 1;
-  --z-thread: 2;
   --z-particle: 3;
   --z-node: 4;
   --z-phrase: 5;

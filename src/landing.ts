@@ -65,6 +65,26 @@ function getNodeIdFromUrl(): string | null {
 }
 
 /**
+ * Whether a node ID can be opened as a container: it must exist in the
+ * manifest and not be a type with no container renderer (bio is a landing
+ * hover-only interaction, not an openable container).
+ */
+function canOpenNode(nodeId: string): boolean {
+  const node = get('nodes').find((n) => n.id === nodeId);
+  return !!node && node.type !== 'bio';
+}
+
+/**
+ * Strip the node hash from the URL without leaving history clutter, and
+ * stay on the landing page.
+ */
+function clearInvalidNodeHash(): void {
+  if (window.location.hash) {
+    history.replaceState({}, '', window.location.pathname);
+  }
+}
+
+/**
  * Update URL to reflect open node
  */
 function updateUrlForNode(nodeId: string | null): void {
@@ -90,12 +110,20 @@ function handlePopState(): void {
 
   if (nodeId && !isContainerMode) {
     // URL has node but container is closed - open it
+    if (!canOpenNode(nodeId)) {
+      clearInvalidNodeHash();
+      return;
+    }
     focusEssay(nodeId);
   } else if (!nodeId && isContainerMode && activeNodeId) {
     // URL has no node but container is open - close it
     requestCloseContainer();
   } else if (nodeId && isContainerMode && nodeId !== activeNodeId) {
     // Different node in URL - switch to it
+    if (!canOpenNode(nodeId)) {
+      clearInvalidNodeHash();
+      return;
+    }
     set('pendingNodeId', nodeId);
     set('isNodeSwitching', true);
     hidePhrase();
@@ -614,11 +642,11 @@ async function initLanding(): Promise<void> {
     // Check URL for initial node to open
     const initialNodeId = getNodeIdFromUrl();
     if (initialNodeId) {
-      // Verify node exists
-      const nodeExists = nodesData.some((n) => n.id === initialNodeId);
-      if (nodeExists) {
+      if (canOpenNode(initialNodeId)) {
         // Small delay to ensure DOM is ready
         setTimeout(() => focusEssay(initialNodeId), 100);
+      } else {
+        clearInvalidNodeHash();
       }
     }
   } catch (err) {

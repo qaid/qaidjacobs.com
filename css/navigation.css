@@ -327,7 +327,7 @@
   .nav-overlay {
     padding: max(var(--space-8), env(safe-area-inset-top)) var(--space-4)
       max(var(--space-6), env(safe-area-inset-bottom));
-    gap: var(--space-5);
+    gap: var(--space-4);
     align-content: start;
   }
   .nav-overlay-web {

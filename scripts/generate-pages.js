@@ -102,8 +102,9 @@ async function generatePages() {
         throw new Error(`${file}: Missing or invalid 'id' field`);
       }
 
-      // Drafts get no public page or sitemap entry.
-      if (node.draft === true) continue;
+      // Drafts and bio (a landing hover interaction, not a public container)
+      // get no public page or sitemap entry.
+      if (node.draft === true || node.type === 'bio') continue;
 
       const description = getDescription(node);
       const bodyContent = await getBodyContent(node, description);

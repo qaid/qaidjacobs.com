@@ -7,7 +7,7 @@ import type { NodePx, Thread, ThreadType } from '../types';
 import { createElement } from '../utils/dom';
 import { easeInOutQuad } from '../utils/animation';
 import { THREAD_PALETTES } from '../state/store';
-import { ambientMotionEnabled } from '../utils/env';
+import { ambientMotionEnabled, onEnvChange } from '../utils/env';
 
 // Resolve the ordered list of thread hues a connection carries.
 // Streams draw their own paths from node positions, so a connection is just
@@ -273,3 +273,11 @@ export function stopAllParticleStreams(): void {
   streamParticles.clear();
   activeStreams.clear();
 }
+
+// Crossing to mobile width or enabling OS reduced-motion mid-session should
+// kill any in-flight hover streams immediately, not just block new ones.
+// (Re-enabling doesn't need to restart anything: streams are hover-triggered,
+// not persistent, so the next hover just works.)
+onEnvChange(() => {
+  if (!ambientMotionEnabled()) stopAllParticleStreams();
+});

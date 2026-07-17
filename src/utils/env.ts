@@ -2,7 +2,7 @@
  * Environment / preference helpers.
  *
  * Two runtime gates the interaction layer respects everywhere:
- *  - reduced motion  → kill ambient drift, particle streams, thread pulse
+ *  - reduced motion  → kill ambient drift, particle streams
  *  - mobile          → simpler containers, no edge-hover, ambient motion off
  *
  * Both are live: they re-evaluate on the underlying media query so a user

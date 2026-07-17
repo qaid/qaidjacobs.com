@@ -511,7 +511,7 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
   .phrase {
     position: static;
     top: auto;
-    padding: clamp(2rem, 8vh, 3.5rem) var(--space-5) var(--space-4);
+    padding: clamp(2rem, 8vh, 3.5rem) var(--space-6) var(--space-4);
     z-index: auto;
   }
   .phrase-text {
@@ -609,7 +609,7 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
 }
 
 /* ============================================================
-   Reduced motion: no drift, no particle streams, no thread pulse,
+   Reduced motion: no drift, no particle streams,
    container open/close collapses to a crossfade. JS also skips the
    motion loops; this covers the CSS-driven transitions.
    ============================================================ */

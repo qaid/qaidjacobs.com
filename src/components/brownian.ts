@@ -3,7 +3,7 @@
  * Creates subtle, organic drift like dust motes in warm afternoon sun
  */
 
-import { ambientMotionEnabled } from '../utils/env';
+import { ambientMotionEnabled, onEnvChange } from '../utils/env';
 
 interface DotMotionState {
   nodeId: string;
@@ -34,6 +34,11 @@ let globalPaused = false;
 // The web container dots are positioned within. Used to translate the phrase's
 // viewport rect into the same coordinate space as the dots' left/top.
 let motionContainer: HTMLElement | null = null;
+
+// Last dot elements passed to initBrownianMotion, kept so an onEnvChange
+// restart (e.g. crossing back from mobile width, or reduced-motion turning
+// off mid-session) can re-seed drift without a caller re-invoking it.
+let lastDotElements: Map<string, HTMLElement> | null = null;
 
 // Horizontal exclusion band covering the phrase/quote area, in the dots'
 // coordinate space (same origin as their left/top). Nodes and their labels
@@ -192,6 +197,8 @@ export function initBrownianMotion(
   stopBrownianMotion();
 
   motionContainer = container ?? motionContainer;
+  lastDotElements = dotElements;
+  ensureEnvChangeListener();
 
   // Respect reduced-motion and mobile: nodes stay exactly where placed.
   if (!ambientMotionEnabled()) return;
@@ -259,6 +266,26 @@ function ensureResizeListener(): void {
   if (resizeListenerAttached) return;
   window.addEventListener('resize', onResize, { passive: true });
   resizeListenerAttached = true;
+}
+
+// Subscribed once, for the life of the page. Crossing to mobile width or
+// enabling OS reduced-motion mid-session stops drift immediately; crossing
+// back restarts it (using the dots from the most recent initBrownianMotion
+// call), rather than requiring a reload to pick up the change.
+let envChangeListenerAttached = false;
+
+function ensureEnvChangeListener(): void {
+  if (envChangeListenerAttached) return;
+  envChangeListenerAttached = true;
+  onEnvChange(() => {
+    if (!ambientMotionEnabled()) {
+      stopBrownianMotion();
+      return;
+    }
+    if (lastDotElements && lastDotElements.size > 0) {
+      initBrownianMotion(lastDotElements, motionContainer);
+    }
+  });
 }
 
 /**

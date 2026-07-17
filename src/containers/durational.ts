@@ -28,6 +28,11 @@ let activeContentEl: HTMLElement | null = null;
 // SoundCloud Widget handle (when the API is available).
 let scWidget: SoundCloudWidget | null = null;
 
+// Render generation counter: bumped on every render() and cleanup() so an
+// in-flight wireSoundCloudCurve() from a closed/reopened container can tell
+// it's stale and bail instead of clobbering the live widget/content element.
+let renderGeneration = 0;
+
 // --- SoundCloud Widget API (progressive enhancement) ---
 const SC_API_SRC = 'https://w.soundcloud.com/player/api.js';
 
@@ -99,19 +104,27 @@ function applyIntensity(intensity: number): void {
  * No-op (with a calm default) when the API is unavailable.
  */
 async function wireSoundCloudCurve(iframe: HTMLIFrameElement): Promise<void> {
+  const generation = renderGeneration;
   applyIntensity(saturationCurve(0));
 
   const SC = await loadSoundCloudApi();
+  if (generation !== renderGeneration) return; // Stale: container closed/reopened since.
   if (!SC?.Widget) return; // Offline / blocked → keep the calm default.
 
   try {
-    scWidget = SC.Widget(iframe);
-    scWidget.bind(SC.Widget.Events.PLAY_PROGRESS, (e) => {
+    const widget = SC.Widget(iframe);
+    widget.bind(SC.Widget.Events.PLAY_PROGRESS, (e) => {
+      if (generation !== renderGeneration) return;
       applyIntensity(saturationCurve(e.relativePosition ?? 0));
     });
-    scWidget.bind(SC.Widget.Events.FINISH, () => applyIntensity(saturationCurve(1)));
+    widget.bind(SC.Widget.Events.FINISH, () => {
+      if (generation !== renderGeneration) return;
+      applyIntensity(saturationCurve(1));
+    });
+    if (generation !== renderGeneration) return; // Bail before assigning module state.
+    scWidget = widget;
   } catch {
-    scWidget = null;
+    if (generation === renderGeneration) scWidget = null;
   }
 }
 
@@ -316,6 +329,7 @@ function formatSubtype(subtype?: string): string {
 
 export const durationalRenderer: ContainerRenderer = {
   async render(nodeId: string, cardEl: HTMLElement): Promise<void> {
+    renderGeneration += 1;
     clearContainerContent(cardEl);
 
     // Load durational data
@@ -370,6 +384,7 @@ export const durationalRenderer: ContainerRenderer = {
   },
 
   cleanup(): void {
+    renderGeneration += 1;
     stopParticles();
     if (scWidget) {
       try {
