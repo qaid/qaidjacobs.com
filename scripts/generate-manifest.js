@@ -90,6 +90,13 @@ async function generateManifest() {
           continue;
         }
 
+        // Drafts are excluded everywhere (landing, nav overlay, prerender)
+        // until their real content is ready.
+        if (node.draft === true) {
+          console.log(`   ✏️  ${file}: Draft, excluded from manifest`);
+          continue;
+        }
+
         // Preserve authored positions for a stable, thread-balanced layout.
         // Only randomize when a node ships without coordinates.
         if (typeof node.x !== 'number' || typeof node.y !== 'number') {

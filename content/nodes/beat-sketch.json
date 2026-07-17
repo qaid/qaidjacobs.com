@@ -3,9 +3,13 @@
   "title": "Beat sketch",
   "type": "artifact",
   "subtype": "scrapbook",
-  "threads": ["music", "movement"],
+  "threads": [
+    "music",
+    "movement"
+  ],
   "visible_on_landing": false,
   "x": 18,
   "y": 62,
-  "created": "2026-01-10"
+  "created": "2026-01-10",
+  "draft": true
 }

@@ -102,6 +102,9 @@ async function generatePages() {
         throw new Error(`${file}: Missing or invalid 'id' field`);
       }
 
+      // Drafts get no public page or sitemap entry.
+      if (node.draft === true) continue;
+
       const description = getDescription(node);
       const bodyContent = await getBodyContent(node, description);
       const outputDirectory = join(OUTPUT_DIR, node.id);
