@@ -7,7 +7,7 @@
 :root {
   /* Handwritten/organic font. A sibling agent owns the real token; this is a
      standalone-safe fallback chain so the container works on its own. */
-  --font-organic: "Caveat", "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive;
+  --font-organic: "Source Serif 4", Georgia, serif;
 
   /* Scrapbook surface — warm paper in light mode */
   --artifact-bg: #efe7d6;
@@ -65,13 +65,15 @@
 /* Eyebrow reads as a scrapbook label */
 .container-overlay.is-artifact .eyebrow {
   font-family: var(--font-organic);
-  font-size: 1.35rem;
+  font-style: italic;
+  font-size: 1.1rem;
   letter-spacing: 0.02em;
   opacity: 0.8;
 }
 
 .container-overlay.is-artifact h2 {
   font-family: var(--font-organic);
+  font-style: italic;
   letter-spacing: 0.01em;
 }
 
@@ -84,8 +86,9 @@
 
 .artifacts-intro {
   font-family: var(--font-organic);
-  font-size: 1.4rem;
-  line-height: 1.4;
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.5;
   color: var(--artifact-note);
   max-width: 46ch;
   margin: 0 auto var(--space-8);
@@ -217,7 +220,8 @@
 .artifact-audio-label {
   display: block;
   font-family: var(--font-organic);
-  font-size: 1.3rem;
+  font-style: italic;
+  font-size: 1.05rem;
   color: var(--artifact-note);
   margin-bottom: 8px;
   transform: rotate(-1deg);
@@ -232,8 +236,9 @@
 /* ---- Notes ---- */
 .artifact-note {
   font-family: var(--font-organic);
-  font-size: 1.3rem;
-  line-height: 1.35;
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.45;
   color: var(--artifact-note);
   max-width: 22ch;
   margin: 14px auto 0;
