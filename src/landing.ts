@@ -519,6 +519,34 @@ async function initBioSignature(): Promise<void> {
 }
 
 /**
+ * Entrance reveal: hold the web's node labels at full strength while the web
+ * fades in, then settle them to their ambient resting opacity after ~2.5s.
+ * The bright hold ends early on the first pointer/keyboard interaction, so a
+ * visitor who engages immediately isn't fighting a transition. Purely an
+ * opacity settle — reduced-motion is respected by the CSS (which collapses
+ * the transition to a short crossfade) with no extra motion added here.
+ */
+function playEntranceReveal(): void {
+  if (!webEl) return;
+  webEl.classList.add('is-introducing');
+
+  let settled = false;
+  const settle = (): void => {
+    if (settled) return;
+    settled = true;
+    webEl.classList.remove('is-introducing');
+    window.clearTimeout(timer);
+    window.removeEventListener('pointerdown', settle);
+    window.removeEventListener('keydown', settle);
+  };
+
+  const timer = window.setTimeout(settle, 2500);
+  // First interaction settles the web immediately.
+  window.addEventListener('pointerdown', settle, { once: true });
+  window.addEventListener('keydown', settle, { once: true });
+}
+
+/**
  * Initialize landing page
  */
 async function initLanding(): Promise<void> {
@@ -548,6 +576,11 @@ async function initLanding(): Promise<void> {
       onHoverEnter: handleNodeHoverEnter,
       onHoverLeave: handleNodeHoverLeave,
     });
+
+    // Entrance reveal: labels render at full strength, then settle to their
+    // ambient resting opacity after ~2.5s — so a first-time visitor reads
+    // "these are labeled, clickable things" before the landing goes quiet.
+    playEntranceReveal();
 
     // Check URL for initial node to open
     const initialNodeId = getNodeIdFromUrl();

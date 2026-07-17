@@ -68,8 +68,11 @@
   --radius: 16px;
   --transition: 180ms ease;
 
-  /* Durational container - warm muted tones ("trendy brunch" vibe) */
-  --durational-bg: rgba(245, 240, 235, 0.98);
+  /* Durational container - warm muted tones ("trendy brunch" vibe).
+     A deeper, more saturated cream than the near-white default so the card
+     reads as warm at rest; the ambient warmth still lifts with playback via
+     --durational-intensity in durational.css. */
+  --durational-bg: rgb(240, 226, 212);
   --durational-particle: rgba(180, 140, 100, 0.6);
   --durational-accent: #c4956a;
 }
@@ -107,7 +110,7 @@
     --bg-base: rgba(12, 13, 14, 0.9);
 
     /* Durational container - dark mode */
-    --durational-bg: rgba(25, 22, 20, 0.98);
+    --durational-bg: rgb(38, 30, 24);
     --durational-particle: rgba(200, 160, 120, 0.4);
     --durational-accent: #d4a574;
   }
@@ -145,7 +148,7 @@
   --bg-base: rgba(12, 13, 14, 0.9);
 
   /* Durational container - dark mode */
-  --durational-bg: rgba(25, 22, 20, 0.98);
+  --durational-bg: rgb(38, 30, 24);
   --durational-particle: rgba(200, 160, 120, 0.4);
   --durational-accent: #d4a574;
 }

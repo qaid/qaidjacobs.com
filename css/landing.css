@@ -269,6 +269,16 @@ body.container-mode .particle {
   transition: opacity 220ms ease, transform 220ms ease;
 }
 
+/* Entrance reveal (discovery affordance): on first load the web fades in with
+   its labels at full strength, announcing "these are labeled, clickable
+   things," then settles to the ambient resting opacity. The .is-introducing
+   class is added at render and removed after a timeout (or on first
+   interaction); the long transition carries the labels down to rest. */
+.web.is-introducing .node-label {
+  opacity: 1;
+  transition: opacity 1200ms ease;
+}
+
 .node[data-label-side="right"] .node-label {
   left: 16px;
   text-align: left;

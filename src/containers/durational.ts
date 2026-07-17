@@ -276,13 +276,14 @@ function startParticles(container: HTMLElement): void {
     particle.style.top = '0';
     particle.style.transform = `translate(${x}px, ${y}px)`;
 
-    // Larger, more visible particles
-    const size = 3 + Math.random() * 4;
+    // Larger, more visible particles — sized so they read over the warm card
+    // even at the resting intensity.
+    const size = 4 + Math.random() * 5;
     particle.style.width = `${size}px`;
     particle.style.height = `${size}px`;
 
-    // Higher opacity for better visibility
-    particle.style.opacity = `${0.5 + Math.random() * 0.4}`;
+    // Higher opacity for better visibility at rest.
+    particle.style.opacity = `${0.65 + Math.random() * 0.35}`;
 
     container.appendChild(particle);
     particleStates.push({ el: particle, x, y, vx, vy });

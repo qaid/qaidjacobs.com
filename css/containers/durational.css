@@ -51,24 +51,54 @@
   min-height: 400px;
 }
 
-/* Particle background — opacity + saturation rise and fall with intensity */
+/* Durational warmth: an ambient wash of the accent hue over the card, bled
+   from the edges inward. Its strength rises and falls with playback via
+   --durational-intensity, so the "trendy brunch" glow is perceptibly warmer
+   at mid-track peak than at rest — subtle, atmospheric, never orange.
+   Sits behind the player and particles (negative margin fills the card's
+   own padding so the wash reaches the card edges). */
+.durational-content::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--space-6));
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      rgba(196, 149, 106, calc(0.16 + 0.30 * var(--durational-intensity))),
+      transparent 68%
+    ),
+    radial-gradient(
+      120% 90% at 50% 100%,
+      rgba(196, 149, 106, calc(0.10 + 0.22 * var(--durational-intensity))),
+      transparent 66%
+    );
+  transition: background 700ms ease;
+}
+
+/* Particle background — opacity + saturation rise and fall with intensity.
+   Floor is lifted so particles stay perceptible over the warm card even at
+   the resting (low-intensity) state. */
 .durational-particles {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  opacity: calc(0.35 + 0.55 * var(--durational-intensity));
-  filter: saturate(calc(0.4 + 1.1 * var(--durational-intensity)));
+  opacity: calc(0.6 + 0.4 * var(--durational-intensity));
+  filter: saturate(calc(0.7 + 0.9 * var(--durational-intensity)));
   transition: opacity 600ms ease, filter 600ms ease;
   z-index: var(--z-web);
 }
 
 .durational-particle {
   position: absolute;
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--durational-particle);
+  box-shadow: 0 0 4px var(--durational-particle);
   will-change: transform;
 }
 
