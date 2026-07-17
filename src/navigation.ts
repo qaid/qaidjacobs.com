@@ -4,9 +4,10 @@
  * The navigation overlay is a single state that can be summoned three ways:
  *   1. Desktop edge-hover — nudging the pointer within 48px of the left,
  *      right, or bottom edge (never the top; the phrase lives there).
- *   2. The Braille Q logo (header on desktop, bottom-corner on mobile).
- *   3. (dismiss only) Esc, click-through on the backdrop, or — for
- *      edge-hover summons — moving the pointer back out of the zone.
+ *   2. The Braille Q logo — bottom-corner on mobile only. (The desktop header
+ *      logo is a plain link home; it no longer summons the map.)
+ *   3. (dismiss only) Esc, the close button, or click-through on the backdrop.
+ *      Edge-hover OPENS but never auto-dismisses; the user closes explicitly.
  *
  * When summoned it fades in the full node web (every node, prominent) plus
  * the constellation.design link. Selecting a node steps into its container.
@@ -34,10 +35,11 @@ const triggers = Array.from(
 let isOpen = false;
 // The element focus should return to when the overlay closes.
 let lastTrigger: HTMLElement | null = null;
-// True when the overlay was summoned by edge-hover: leaving the zone (or the
-// web area) auto-dismisses. Logo-summoned overlays stay until an explicit
-// dismiss, so touch users aren't fighting a self-closing panel.
-let summonedByHover = false;
+// Edge-hover opens the overlay but never auto-dismisses. After a close, the
+// pointer must leave the edge zone once before another hover can re-open —
+// otherwise the map would immediately re-open under a pointer still resting in
+// the zone after clicking the close button.
+let armed = true;
 let nodesLoaded = false;
 
 /* ----------------------------------------------------------------------
@@ -98,7 +100,12 @@ async function buildOverlayWeb(): Promise<void> {
 
   const list = createElement('ul', { className: 'nav-web-list' });
 
-  nodes.forEach((node) => {
+  // The bio node is an inert "About" that only reveals its text on the landing
+  // hover; it has no container to step into, so it's omitted from the overlay
+  // rather than shown as a row that would open an empty container.
+  nodes
+    .filter((node) => node.type !== 'bio')
+    .forEach((node) => {
     const li = createElement('li', { className: 'nav-web-item' });
 
     const btn = createElement('button', {
@@ -154,13 +161,8 @@ function setTriggerState(pressed: boolean): void {
 }
 
 async function open(viaHover: boolean, originator?: HTMLElement): Promise<void> {
-  if (!overlay || isOpen) {
-    // Already open: a logo press upgrades a hover-summon to a sticky one.
-    if (isOpen && !viaHover) summonedByHover = false;
-    return;
-  }
+  if (!overlay || isOpen) return;
   isOpen = true;
-  summonedByHover = viaHover;
   lastTrigger = originator || triggers[0] || null;
 
   await buildOverlayWeb();
@@ -181,7 +183,9 @@ async function open(viaHover: boolean, originator?: HTMLElement): Promise<void> 
 function close(): void {
   if (!overlay || !isOpen) return;
   isOpen = false;
-  summonedByHover = false;
+  // Require the pointer to leave the edge zone before hover can re-open, so
+  // closing while the pointer still rests in a zone doesn't instantly re-open.
+  armed = false;
 
   overlay.classList.remove('is-open');
   document.body.classList.remove('nav-open');
@@ -231,18 +235,19 @@ function processPointer(): void {
 
   const inZone = inEdgeZone(pendingX, pendingY);
 
-  if (inZone && !isOpen) {
+  // Re-arm once the pointer has left every edge zone. This prevents an
+  // immediate re-open after the user closes the overlay while their pointer is
+  // still resting in a zone.
+  if (!inZone) {
+    armed = true;
+    return;
+  }
+
+  // Edge-hover opens the overlay, but only when armed and while it's not
+  // already open. It never auto-dismisses — the user closes it explicitly via
+  // the close button, Esc, or a backdrop click.
+  if (inZone && !isOpen && armed) {
     open(true);
-  } else if (!inZone && isOpen && summonedByHover) {
-    // Leaving the summoning band dismisses a hover-summoned map — but keep it
-    // alive while the pointer is over the overlay's interactive content (the
-    // node list or the constellation link). The backdrop is NOT a keep-alive
-    // zone; otherwise a full-screen overlay could never auto-dismiss.
-    const overEl = document.elementFromPoint(pendingX, pendingY);
-    const overContent = !!overEl?.closest(
-      '.nav-overlay-web, .nav-overlay-constellation'
-    );
-    if (!overContent) close();
   }
 }
 
@@ -289,10 +294,10 @@ function initNavigation(): void {
   // Desktop edge-hover.
   window.addEventListener('pointermove', onPointerMove, { passive: true });
 
-  // If the viewport crosses the mobile breakpoint while open via hover,
-  // don't leave a hover-only affordance stranded.
+  // Re-arm edge-hover whenever the environment changes (e.g. crossing the
+  // mobile breakpoint) so a stale disarm doesn't strand desktop hover.
   onEnvChange(() => {
-    if (isMobile() && isOpen && summonedByHover) close();
+    armed = true;
   });
 }
 

@@ -55,6 +55,18 @@
     "created": "2026-01-10"
   },
   {
+    "id": "bio",
+    "title": "About",
+    "type": "bio",
+    "threads": [
+      "questions"
+    ],
+    "visible_on_landing": true,
+    "x": 50,
+    "y": 50,
+    "bioText": "In short, I'm Qa'id:\n\n\na father, designer, DJ, tinkerer.\nAlways in motion between places and questions."
+  },
+  {
     "id": "hbo-between-the-world-and-me-podcast",
     "title": "HBO’s Between The World And Me Podcast: Episode 1",
     "type": "durational",

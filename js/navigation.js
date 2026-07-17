@@ -23,7 +23,7 @@ var overlayWeb = getById("nav-overlay-web");
 var triggers = Array.from(queryAll(".nav-trigger"));
 var isOpen = false;
 var lastTrigger = null;
-var summonedByHover = false;
+var armed = true;
 var nodesLoaded = false;
 var TYPE_LABEL = {
   essay: "Essay",
@@ -64,7 +64,7 @@ async function buildOverlayWeb() {
     nodes = [];
   }
   const list = createElement("ul", { className: "nav-web-list" });
-  nodes.forEach((node) => {
+  nodes.filter((node) => node.type !== "bio").forEach((node) => {
     const li = createElement("li", { className: "nav-web-item" });
     const btn = createElement("button", {
       className: "nav-web-node",
@@ -107,13 +107,9 @@ function setTriggerState(pressed) {
   });
 }
 async function open(viaHover, originator) {
-  if (!overlay || isOpen) {
-    if (isOpen && !viaHover)
-      summonedByHover = false;
+  if (!overlay || isOpen)
     return;
-  }
   isOpen = true;
-  summonedByHover = viaHover;
   lastTrigger = originator || triggers[0] || null;
   await buildOverlayWeb();
   overlay.hidden = false;
@@ -129,7 +125,7 @@ function close() {
   if (!overlay || !isOpen)
     return;
   isOpen = false;
-  summonedByHover = false;
+  armed = false;
   overlay.classList.remove("is-open");
   document.body.classList.remove("nav-open");
   setTriggerState(false);
@@ -166,13 +162,12 @@ function processPointer() {
   if (isMobile())
     return;
   const inZone = inEdgeZone(pendingX, pendingY);
-  if (inZone && !isOpen) {
+  if (!inZone) {
+    armed = true;
+    return;
+  }
+  if (inZone && !isOpen && armed) {
     open(true);
-  } else if (!inZone && isOpen && summonedByHover) {
-    const overEl = document.elementFromPoint(pendingX, pendingY);
-    const overContent = !!overEl?.closest(".nav-overlay-web, .nav-overlay-constellation");
-    if (!overContent)
-      close();
   }
 }
 function onPointerMove(e) {
@@ -206,8 +201,7 @@ function initNavigation() {
   });
   window.addEventListener("pointermove", onPointerMove, { passive: true });
   onEnvChange(() => {
-    if (isMobile() && isOpen && summonedByHover)
-      close();
+    armed = true;
   });
 }
 initNavigation();

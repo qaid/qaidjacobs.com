@@ -3,17 +3,17 @@
  * Creates animated particles flowing between connected nodes
  */
 
-import type { NodePx, ThreadType } from '../types';
+import type { NodePx, Thread, ThreadType } from '../types';
 import { createElement } from '../utils/dom';
 import { easeInOutQuad } from '../utils/animation';
 import { THREAD_PALETTES } from '../state/store';
 import { ambientMotionEnabled } from '../utils/env';
 
 // Resolve the ordered list of thread hues a connection carries.
-function threadColors(thread: HTMLElement): string[] {
-  const list = (thread.dataset.threads || thread.dataset.thread || 'questions')
-    .split(' ')
-    .filter(Boolean) as ThreadType[];
+// Streams draw their own paths from node positions, so a connection is just
+// its data (from/to/threads) — no DOM line element required.
+function threadColors(threads?: ThreadType[]): string[] {
+  const list = threads && threads.length ? threads : (['questions'] as ThreadType[]);
   return list.map((t) => (THREAD_PALETTES[t] || THREAD_PALETTES.questions)[0]);
 }
 
@@ -185,7 +185,7 @@ function createParticleStream(
 export function startParticleStreams(
   nodeId: string,
   _nodesPx: NodePx[],
-  threadElements: HTMLElement[],
+  connections: Thread[],
   container: HTMLElement,
   dotElements: Map<string, HTMLElement>
 ): void {
@@ -195,23 +195,24 @@ export function startParticleStreams(
   // No particle streams under reduced-motion or on mobile.
   if (!ambientMotionEnabled()) return;
 
-  // Find threads connected to this node
-  const connectedThreads = threadElements.filter(
-    (thread) => thread.dataset.from === nodeId || thread.dataset.to === nodeId
+  // Find connections touching this node. Streams compute their paths from the
+  // live node positions, so no thread line element is needed.
+  const connectedThreads = connections.filter(
+    (conn) => conn.from === nodeId || conn.to === nodeId
   );
 
   const allParticles: HTMLElement[] = [];
 
-  connectedThreads.forEach((thread, idx) => {
-    const fromNodeId = thread.dataset.from;
-    const toNodeId = thread.dataset.to;
+  connectedThreads.forEach((conn, idx) => {
+    const fromNodeId = conn.from;
+    const toNodeId = conn.to;
     if (!fromNodeId || !toNodeId) return;
 
     const fromDot = dotElements.get(fromNodeId);
     const toDot = dotElements.get(toNodeId);
     if (!fromDot || !toDot) return;
 
-    const colors = threadColors(thread);
+    const colors = threadColors(conn.threads as ThreadType[] | undefined);
 
     // Determine direction (particles flow from hovered node)
     const isFromHovered = fromNodeId === nodeId;

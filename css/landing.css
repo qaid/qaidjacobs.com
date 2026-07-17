@@ -59,34 +59,6 @@ body.phrase-fade-in .phrase {
   margin-top: 0.15rem;
 }
 
-/* Bio signature — a floating, handwritten note at the bottom of the web.
-   Always visible on the landing; recedes when a container opens. */
-.bio-signature {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(2.5rem, 7vh, 5rem);
-  transform: translateX(-50%);
-  width: min(640px, calc(100vw - 3rem));
-  margin: 0;
-  text-align: center;
-  font-family: var(--font-organic);
-  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
-  line-height: 1.35;
-  color: var(--fg);
-  opacity: 0;
-  transition: opacity 900ms ease;
-  pointer-events: none;
-  z-index: var(--z-signature);
-}
-
-.bio-signature.is-visible {
-  opacity: 0.78;
-}
-
-body.container-mode .bio-signature {
-  opacity: 0;
-}
-
 .web {
   position: relative;
   height: 100%;
@@ -122,7 +94,6 @@ body.container-mode .web.dim {
   filter: none;
 }
 
-body.container-mode .thread,
 body.container-mode .particle {
   opacity: 0;
   pointer-events: none;
@@ -147,6 +118,23 @@ body.container-mode .particle {
 .node[data-type="essay"] { color: var(--node-essay); }
 .node[data-type="durational"] { color: var(--node-durational); }
 .node[data-type="curiosity"] { color: var(--node-curiosity); }
+.node[data-type="bio"] { color: var(--node-bio); }
+
+/* Bio marker: a soft outlined ring — the inert "About" node. */
+.node-dot[data-type="bio"] {
+  width: 17px;
+  height: 17px;
+  background: transparent;
+  border: 2px solid currentColor;
+  box-shadow: none;
+}
+
+/* Bio is inert: no pointer cursor, no hover scale-up. */
+.node[data-type="bio"] { cursor: default; }
+.node[data-type="bio"]:hover .node-dot,
+.node[data-type="bio"]:focus-visible .node-dot {
+  transform: translate(-50%, -50%);
+}
 
 /* Marker: centered on the node's coordinate */
 .node-dot {
@@ -342,10 +330,6 @@ body.container-mode .node.container-active .node-dot {
   transform: translate(-50%, -50%) scale(1.2);
 }
 
-.thread.visible {
-  opacity: 0.85;
-}
-
 .curiosity-stage {
   position: relative;
   width: 100%;
@@ -472,33 +456,8 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
   position: relative;
 }
 
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
 .node-dot.brownian {
   animation: none;
-}
-
-.thread {
-  position: absolute;
-  height: 2px;
-  /* Blend across every thread hue this connection carries.
-     Single-thread lines resolve to a solid color. */
-  background: linear-gradient(90deg, var(--blend, var(--thread-questions)));
-  opacity: 0.62;
-  overflow: visible;
-  pointer-events: none;
-  z-index: var(--z-thread);
-  border-radius: 2px;
 }
 
 .particle {
@@ -530,12 +489,6 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
     opacity: 0;
     transform: scale(0.3);
   }
-}
-
-@keyframes pulse {
-  0% { opacity: 0.3; }
-  50% { opacity: 0.9; }
-  100% { opacity: 0.3; }
 }
 
 /* ============================================================
@@ -580,8 +533,7 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
   }
   .web::after { content: none; }
 
-  /* Threads and particles are desktop-spatial only; hide on mobile. */
-  .web .thread,
+  /* Particles are desktop-spatial only; hide on mobile. */
   .web .particle {
     display: none;
   }
@@ -647,19 +599,6 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
     white-space: normal;
   }
 
-  /* Bio signature returns to normal flow beneath the list. */
-  .bio-signature {
-    position: static;
-    left: auto;
-    bottom: auto;
-    transform: none;
-    width: auto;
-    /* Bottom clearance for the fixed corner nav logo (56px + its inset). */
-    margin: var(--space-4) auto calc(56px + var(--space-8));
-    padding: 0 var(--space-5);
-    max-width: 560px;
-  }
-
   /* When a container is open on mobile it fills the viewport — the flowed
      landing list would otherwise bleed through the card. Hide the landing
      (its own sibling; the fixed container-overlay stays on top). */
@@ -678,9 +617,7 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
   .node-dot,
   .node-label,
   .web,
-  .phrase,
-  .bio-signature,
-  .thread {
+  .phrase {
     transition: opacity 120ms linear !important;
     animation: none !important;
   }

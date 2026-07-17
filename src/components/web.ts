@@ -3,9 +3,9 @@
  * Renders the constellation of nodes and connecting threads
  */
 
-import type { Node, NodePx, Thread, ThreadType } from '../types';
+import type { Node, NodePx } from '../types';
 import { createElement } from '../utils/dom';
-import { get, THREAD_COLORS } from '../state/store';
+import { get } from '../state/store';
 import { initBrownianMotion } from './brownian';
 
 // Callback types for external event handling
@@ -16,7 +16,6 @@ export interface WebCallbacks {
 }
 
 // Rendered state
-let threadElements: HTMLElement[] = [];
 let dotElements: Map<string, HTMLElement> = new Map();
 let currentNodesPx: NodePx[] = [];
 
@@ -32,59 +31,6 @@ function nodesToPx(nodes: Node[], container: HTMLElement): NodePx[] {
       y: (n.y / 100) * rect.height,
     },
   }));
-}
-
-/**
- * Create a thread line between two nodes
- */
-function createThreadLine(
-  from: NodePx,
-  to: NodePx,
-  thread: Thread,
-  index: number
-): HTMLElement {
-  const line = createElement('div', { className: 'thread' });
-
-  // Resolve the thread hues. A connection may carry 1..n threads;
-  // we render it as a blend across all of them (general, not per-pair).
-  const threadTypes = (thread.threads?.length ? thread.threads : ['questions']) as ThreadType[];
-  const colors = threadTypes.map((t) => THREAD_COLORS[t] || THREAD_COLORS.questions);
-
-  const primaryThread = threadTypes[0];
-  line.dataset.thread = primaryThread;
-  line.dataset.threads = threadTypes.join(' ');
-  line.dataset.from = thread.from;
-  line.dataset.to = thread.to;
-
-  // Build an evenly-spaced gradient across every thread color.
-  // Single-thread lines collapse to a solid line of one hue.
-  const stops =
-    colors.length === 1
-      ? `${colors[0]}, ${colors[0]}`
-      : colors
-          .map((c, i) => `${c} ${Math.round((i / (colors.length - 1)) * 100)}%`)
-          .join(', ');
-  line.style.setProperty('--blend', stops);
-
-  line.style.setProperty('--i', String(index));
-
-  const x1 = from.center.x;
-  const y1 = from.center.y;
-  const x2 = to.center.x;
-  const y2 = to.center.y;
-
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const dist = Math.hypot(dx, dy);
-  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-  line.style.width = `${dist}px`;
-  line.style.left = `${x1}px`;
-  line.style.top = `${y1}px`;
-  line.style.transformOrigin = '0 0';
-  line.style.transform = `rotate(${angle}deg)`;
-
-  return line;
 }
 
 /**
@@ -131,13 +77,16 @@ function createNodeDot(
   callbacks: WebCallbacks
 ): HTMLElement {
   // A node is a marker (the dot/glyph) plus an always-visible label.
-  // It's a real, keyboard-operable control: role=button + tabindex, activated
-  // by click, Enter, or Space, with an accessible name describing its content.
+  // Most nodes are real, keyboard-operable controls: role=button + tabindex,
+  // activated by click, Enter, or Space, with an accessible name describing
+  // their content. The bio node is inert: it's focusable and announces itself,
+  // but activating it does nothing (hover/focus just swaps the phrase text).
+  const isInert = node.type === 'bio';
   const wrap = createElement('div', {
     className: 'node',
     'data-type': node.type,
     'data-id': node.id,
-    role: 'button',
+    role: isInert ? 'img' : 'button',
     tabindex: '0',
     'aria-label': accessibleName(node),
   });
@@ -172,17 +121,21 @@ function createNodeDot(
   wrap.dataset.origTop = wrap.style.top;
   wrap.title = node.title || node.id;
 
-  wrap.addEventListener('click', () => callbacks.onClick(node));
   wrap.addEventListener('mouseenter', () => callbacks.onHoverEnter(node));
   wrap.addEventListener('mouseleave', () => callbacks.onHoverLeave(node));
 
-  // Keyboard: Enter/Space activate (a11y parity with a real button).
-  wrap.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-      e.preventDefault();
-      callbacks.onClick(node);
-    }
-  });
+  // The bio node is inert: no click activation, and Enter/Space do nothing.
+  if (!isInert) {
+    wrap.addEventListener('click', () => callbacks.onClick(node));
+
+    // Keyboard: Enter/Space activate (a11y parity with a real button).
+    wrap.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        callbacks.onClick(node);
+      }
+    });
+  }
   // Focus surfaces the connected threads too, mirroring hover.
   wrap.addEventListener('focus', () => callbacks.onHoverEnter(node));
   wrap.addEventListener('blur', () => callbacks.onHoverLeave(node));
@@ -202,27 +155,18 @@ export function renderWeb(
   // Landing shows only curated nodes; the rest stay reachable via the nav
   // overlay, which loads the full manifest itself.
   const nodes = get('nodes').filter((n) => n.visible_on_landing !== false);
-  const threads = get('threads');
 
   // Clear existing content
   container.innerHTML = '';
-  threadElements = [];
   dotElements = new Map();
 
   // Convert to pixel coordinates
   const nodesPx = nodesToPx(nodes, container);
   currentNodesPx = nodesPx;
 
-  // Create thread lines
-  threads.forEach((thread, idx) => {
-    const from = nodesPx.find((n) => n.id === thread.from);
-    const to = nodesPx.find((n) => n.id === thread.to);
-    if (!from || !to) return;
-
-    const line = createThreadLine(from, to, thread, idx);
-    container.appendChild(line);
-    threadElements.push(line);
-  });
+  // Connection lines are no longer drawn — nodes float free. Connections still
+  // drive the hover particle streams, which compute their paths from live node
+  // positions (see components/particles.ts).
 
   // Create node markers
   const containerWidth = container.getBoundingClientRect().width;
@@ -232,8 +176,9 @@ export function renderWeb(
     dotElements.set(node.id, dot);
   });
 
-  // Initialize Brownian motion
-  initBrownianMotion(dotElements);
+  // Initialize Brownian motion (pass the container so drift can compute the
+  // phrase exclusion band in the dots' coordinate space).
+  initBrownianMotion(dotElements, container);
 
   // Re-apply container mode if active
   const isContainerMode = get('isContainerMode');
@@ -241,13 +186,6 @@ export function renderWeb(
   if (isContainerMode && activeNodeId) {
     // This will be handled by landing.ts enterContainerMode
   }
-}
-
-/**
- * Get thread elements for particle streams
- */
-export function getThreadElements(): HTMLElement[] {
-  return threadElements;
 }
 
 /**

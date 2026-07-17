@@ -90,13 +90,6 @@ async function generateManifest() {
           continue;
         }
 
-        // Bio is the always-visible signature block, not a web node.
-        // Keep its file for the signature text but exclude it from the web manifest.
-        if (node.type === 'bio') {
-          console.log(`   ✍️  ${file}: bio → signature (excluded from web)`);
-          continue;
-        }
-
         // Preserve authored positions for a stable, thread-balanced layout.
         // Only randomize when a node ships without coordinates.
         if (typeof node.x !== 'number' || typeof node.y !== 'number') {

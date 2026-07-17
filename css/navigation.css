@@ -8,9 +8,10 @@
 
 /* --- Logo trigger (header, desktop) --- */
 
-/* The logo reads subtle at rest, prominent when nav is active. It inherits
-   the header's opacity dimming; when the overlay is open it lifts fully. */
-.logo.nav-trigger {
+/* The header logo is a plain link home (no longer a nav trigger). It reads
+   subtle at rest and lifts gently on hover. */
+.site-header .logo {
+  display: block;
   height: 44px;
   width: 44px;
   padding: 0;
@@ -23,20 +24,13 @@
     filter var(--transition);
 }
 
-.logo.nav-trigger .logo-mark {
+.site-header .logo .logo-mark {
   width: 100%;
   height: 100%;
 }
 
-.logo.nav-trigger:hover {
+.site-header .logo:hover {
   transform: translateY(-2px);
-}
-
-/* Active state: full-strength, gently lifted, thread-tinted glow. */
-.logo.nav-trigger.is-active {
-  opacity: 1 !important;
-  transform: translateY(-1px) scale(1.04);
-  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.25));
 }
 
 /* --- Mobile bottom-corner logo (primary trigger on touch) --- */
@@ -76,7 +70,7 @@
     display: block;
   }
   /* On mobile the header logo steps aside; the corner logo leads. */
-  .site-header .logo.nav-trigger {
+  .site-header .logo {
     display: none;
   }
 }
@@ -285,6 +279,7 @@
 /* --- Focus-visible: consistent, visible, thread-aware --- */
 
 .nav-trigger:focus-visible,
+.site-header .logo:focus-visible,
 .nav-web-node:focus-visible,
 .nav-overlay-close:focus-visible,
 .nav-overlay-constellation:focus-visible,
@@ -333,14 +328,13 @@
 
 /* --- Reduced motion: overlay collapses to a plain crossfade --- */
 @media (prefers-reduced-motion: reduce) {
-  .logo.nav-trigger,
+  .site-header .logo,
   .mobile-logo.nav-trigger,
   .nav-web-node,
   .nav-overlay-constellation {
     transition: opacity 120ms linear, background 120ms linear;
   }
-  .logo.nav-trigger:hover,
-  .logo.nav-trigger.is-active,
+  .site-header .logo:hover,
   .mobile-logo.nav-trigger.is-active,
   .nav-web-node:hover,
   .nav-overlay-constellation:hover {
