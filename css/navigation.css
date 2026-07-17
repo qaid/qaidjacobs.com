@@ -1,0 +1,362 @@
+/* ============================================================
+   Navigation layer
+   - Braille Q logo trigger (header desktop + bottom-corner mobile)
+   - Summoned overlay: the full web as an accessible node list
+   - Constellation.design link
+   Threads carry color; the overlay stays calm and paper/chalk-toned.
+   ============================================================ */
+
+/* --- Logo trigger (header, desktop) --- */
+
+/* The header logo is a plain link home (no longer a nav trigger). It reads
+   subtle at rest and lifts gently on hover. */
+.site-header .logo {
+  display: block;
+  height: 44px;
+  width: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform var(--transition), opacity var(--transition),
+    filter var(--transition);
+}
+
+.site-header .logo .logo-mark {
+  width: 100%;
+  height: 100%;
+}
+
+.site-header .logo:hover {
+  transform: translateY(-2px);
+}
+
+/* --- Mobile bottom-corner logo (primary trigger on touch) --- */
+
+.mobile-logo.nav-trigger {
+  display: none; /* desktop hides it; the header logo is primary there */
+  position: fixed;
+  right: max(var(--space-4), env(safe-area-inset-right));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  padding: 12px;
+  border-radius: 999px;
+  border: var(--border);
+  background: var(--bg-base);
+  color: var(--fg);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  z-index: var(--z-header);
+  transition: transform var(--transition), box-shadow var(--transition),
+    background var(--transition);
+}
+
+.mobile-logo.nav-trigger .logo-mark {
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-logo.nav-trigger.is-active {
+  transform: scale(1.06);
+  box-shadow: var(--shadow-lg);
+  background: var(--paper);
+}
+
+@media (max-width: 768px) {
+  .mobile-logo.nav-trigger {
+    display: block;
+  }
+  /* On mobile the header logo steps aside; the corner logo leads. */
+  .site-header .logo {
+    display: none;
+  }
+}
+
+/* --- The summoned overlay --- */
+
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-nav-overlay);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-6);
+  padding: clamp(var(--space-6), 6vh, var(--space-8))
+    clamp(var(--space-6), 6vw, 4rem);
+  align-content: center;
+  justify-items: center;
+
+  background: var(--bg-base);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
+.nav-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nav-overlay[hidden] {
+  display: none;
+}
+
+/* Overlay header: the kicker sits in the first grid row (centered) with the
+   close button pinned to that row's right edge. Keeping the close button
+   inside a dedicated header row — rather than absolutely positioned over the
+   whole overlay — means it can never land on top of the kicker text, whatever
+   the overlay's height or vertical alignment. */
+.nav-overlay-header {
+  grid-row: 1;
+  justify-self: stretch;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  position: relative;
+}
+
+.nav-overlay-close {
+  position: absolute;
+  top: 50%;
+  right: max(0px, env(safe-area-inset-right));
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  border: var(--border);
+  color: var(--fg);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+.nav-overlay-close:hover {
+  background: color-mix(in srgb, var(--fg) 6%, var(--paper));
+  transform: translateY(-50%) translateY(-1px);
+}
+
+.nav-overlay-kicker {
+  margin: 0;
+  /* Reserve room so the centered kicker never slides under the close button. */
+  padding: 0 56px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: var(--size-sm);
+  color: var(--muted);
+}
+
+/* The web, rendered as a legible list of the whole collection. */
+.nav-overlay-web {
+  width: 100%;
+  max-width: 720px;
+  overflow-y: auto;
+  align-self: center;
+}
+
+.nav-web-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.nav-web-item {
+  margin: 0;
+}
+
+/* One node = one real button. The type glyph reads muted (nodes recede);
+   a small thread-colored bead carries the connection color, matching the
+   landing's "nodes muted, threads sing" without a loud side-tab border. */
+.nav-web-node {
+  --accent: var(--thread-questions);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 56px; /* comfortable target on every device */
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  background: var(--paper);
+  border: var(--border);
+  border-radius: var(--radius);
+  color: var(--fg);
+  cursor: pointer;
+  transition: transform var(--transition), background var(--transition),
+    box-shadow var(--transition);
+}
+
+.nav-web-node:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--accent) 8%, var(--paper));
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-web-glyph {
+  position: relative;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: var(--node-default);
+}
+
+/* Thread bead: a small colored dot tying the node to its primary thread. */
+.nav-web-node::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.nav-web-node[data-type="essay"] .nav-web-glyph { color: var(--node-essay); }
+.nav-web-node[data-type="durational"] .nav-web-glyph { color: var(--node-durational); }
+.nav-web-node[data-type="curiosity"] .nav-web-glyph { color: var(--node-curiosity); }
+.nav-web-node[data-type="bio"] .nav-web-glyph { color: var(--node-bio); }
+
+/* Glyphs echo the landing markers so the two views feel like one system. */
+.nav-web-glyph[data-type="essay"] {
+  width: 16px; height: 20px; border-radius: 3px; background: currentColor;
+  align-self: center;
+}
+.nav-web-glyph[data-type="durational"] {
+  border-radius: 50%; border: 2px solid currentColor; background: transparent;
+}
+.nav-web-glyph[data-type="durational"]::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+  transform: translate(-50%, -50%);
+}
+.nav-web-glyph[data-type="curiosity"] {
+  background: transparent;
+}
+.nav-web-glyph[data-type="curiosity"]::before,
+.nav-web-glyph[data-type="curiosity"]::after {
+  content: ""; position: absolute; border-radius: 50%; background: currentColor;
+}
+.nav-web-glyph[data-type="curiosity"]::before {
+  width: 7px; height: 7px; left: 1px; top: 11px;
+  box-shadow: 12px 3px 0 -1px currentColor;
+}
+.nav-web-glyph[data-type="curiosity"]::after {
+  width: 8px; height: 8px; left: 8px; top: 1px;
+}
+
+.nav-web-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nav-web-kind {
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.nav-web-title {
+  font-size: var(--size-md);
+  font-weight: 500;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Constellation link, revealed with the map (spec: appears when nav prominent). */
+.nav-overlay-constellation {
+  display: block;
+  width: fit-content;
+  opacity: 0.85;
+  transition: opacity var(--transition), transform var(--transition);
+}
+.nav-overlay-constellation:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+.nav-overlay-constellation .constellation-logo {
+  width: 200px;
+  height: auto;
+}
+
+/* --- Focus-visible: consistent, visible, thread-aware --- */
+
+.nav-trigger:focus-visible,
+.site-header .logo:focus-visible,
+.nav-web-node:focus-visible,
+.nav-overlay-close:focus-visible,
+.nav-overlay-constellation:focus-visible,
+.theme-toggle:focus-visible,
+.container-close:focus-visible {
+  outline: 2px solid var(--thread-movement);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* Landing nodes: focus ring hugs the whole node control. */
+.node:focus-visible {
+  outline: 2px solid var(--thread-movement);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
+/* Curiosity linked items keyboard focus. */
+.curiosity-item-linked:focus-visible {
+  outline: 2px solid var(--thread-movement);
+  outline-offset: 3px;
+}
+
+/* --- Mobile overlay: tighter gutters, rows that never overflow --- */
+@media (max-width: 768px) {
+  .nav-overlay {
+    padding: max(var(--space-8), env(safe-area-inset-top)) var(--space-4)
+      max(var(--space-6), env(safe-area-inset-bottom));
+    gap: var(--space-4);
+    align-content: start;
+  }
+  .nav-overlay-web {
+    max-width: 100%;
+  }
+  .nav-web-node {
+    /* Let long titles wrap to a second line rather than clip off-screen. */
+    min-width: 0;
+  }
+  .nav-web-title {
+    white-space: normal;
+  }
+  .nav-overlay-constellation .constellation-logo {
+    width: 160px;
+  }
+}
+
+/* --- Reduced motion: overlay collapses to a plain crossfade --- */
+@media (prefers-reduced-motion: reduce) {
+  .site-header .logo,
+  .mobile-logo.nav-trigger,
+  .nav-web-node,
+  .nav-overlay-constellation {
+    transition: opacity 120ms linear, background 120ms linear;
+  }
+  .site-header .logo:hover,
+  .mobile-logo.nav-trigger.is-active,
+  .nav-web-node:hover,
+  .nav-overlay-constellation:hover {
+    transform: none;
+  }
+}

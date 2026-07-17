@@ -60,7 +60,7 @@ Create a JSON file in `/content/nodes/` with metadata about your essay:
 
 - `id` (required): Unique identifier, should match the filename
 - `title` (required): Display name for the essay
-- `type` (required): Content type - `"essay"`, `"music"`, `"movement"`, or `"curiosity"`
+- `type` (required): Content type - `"essay"`, `"music"`, `"movement"`, `"curiosity"`, or `"artifact"`
 - `subtype` (required): More specific type
 - `threads` (optional): Array of thread types this content belongs to
   - Available threads: `"questions"`, `"movement"`, `"music"`, `"curiosity"`
@@ -68,6 +68,7 @@ Create a JSON file in `/content/nodes/` with metadata about your essay:
 - `created` (optional): Creation date in YYYY-MM-DD format
 - `visible_on_landing` (optional): Whether to show on landing page (defaults to `true`)
 - `x`, `y` (optional): Position on landing web (0-100). If omitted, auto-generated
+- `draft` (optional): Set `true` to exclude the node from the manifest, prerendered pages, and the sitemap. Defaults to `false`.
 
 ### Step 3: Generate the Manifest
 
@@ -168,6 +169,59 @@ The same workflow applies to all content types. Only the node metadata differs.
 **Subtypes:** `"map"`, `"thread"`
 
 Set `"is_hub": true` for central topic nodes that branch to multiple related concepts.
+
+### Artifacts (Scrapbook)
+
+A moodboard of things made: photo stacks, short audio, sketches. Items are placed by hand (slight rotation/offset), not gridded.
+
+**Example:** `/content/nodes/my-scrapbook.json`
+```json
+{
+  "id": "my-scrapbook",
+  "title": "Scrapbook",
+  "type": "artifact",
+  "subtype": "scrapbook",
+  "threads": ["curiosity"],
+  "visible_on_landing": true,
+  "x": 60,
+  "y": 40
+}
+```
+
+**Content file:** `/content/artifacts/my-scrapbook.json`
+```json
+{
+  "title": "Scrapbook",
+  "subtype": "scrapbook",
+  "intro": "Optional intro text shown above the board.",
+  "items": [
+    {
+      "kind": "photo-stack",
+      "srcs": ["images/one.jpg", "images/two.jpg"],
+      "label": "Photo stack",
+      "note": "Optional handwritten-style note",
+      "angle": -3
+    },
+    {
+      "kind": "audio",
+      "audio": "audio/sketch.mp3",
+      "label": "Beat sketch"
+    },
+    {
+      "kind": "image",
+      "src": "images/painting.jpg",
+      "note": "Optional note"
+    }
+  ]
+}
+```
+
+- `items[].kind` (required): `"photo-stack"`, `"audio"`, or `"image"`
+- `items[].srcs` (photo-stack): array of image paths, click/Enter/Space to shuffle
+- `items[].src` (image): single image path
+- `items[].audio` (audio): audio file path, rendered with native controls
+- `items[].note` (optional): short text placed near the item
+- `items[].angle` (optional): explicit tilt in degrees; if omitted, a small deterministic tilt is derived from the item
 
 ## Development Workflow
 

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="440" viewBox="0 0 620 440" role="img" aria-label="Waveform of the beat sketch">
+  <rect width="620" height="440" fill="#1f2a2a"/>
+  <g fill="#4fd1c5">
+    <rect x="40" y="200" width="10" height="40"/>
+    <rect x="60" y="150" width="10" height="140"/>
+    <rect x="80" y="110" width="10" height="220"/>
+    <rect x="100" y="180" width="10" height="80"/>
+    <rect x="120" y="90" width="10" height="260"/>
+    <rect x="140" y="160" width="10" height="120"/>
+    <rect x="160" y="210" width="10" height="20"/>
+    <rect x="180" y="120" width="10" height="200"/>
+    <rect x="200" y="70" width="10" height="300"/>
+    <rect x="220" y="170" width="10" height="100"/>
+    <rect x="240" y="140" width="10" height="160"/>
+    <rect x="260" y="200" width="10" height="40"/>
+    <rect x="280" y="100" width="10" height="240"/>
+    <rect x="300" y="160" width="10" height="120"/>
+    <rect x="320" y="130" width="10" height="180"/>
+    <rect x="340" y="190" width="10" height="60"/>
+    <rect x="360" y="80" width="10" height="280"/>
+    <rect x="380" y="150" width="10" height="140"/>
+    <rect x="400" y="110" width="10" height="220"/>
+    <rect x="420" y="200" width="10" height="40"/>
+    <rect x="440" y="140" width="10" height="160"/>
+    <rect x="460" y="100" width="10" height="240"/>
+    <rect x="480" y="180" width="10" height="80"/>
+    <rect x="500" y="130" width="10" height="180"/>
+    <rect x="520" y="200" width="10" height="40"/>
+    <rect x="540" y="160" width="10" height="120"/>
+    <rect x="560" y="120" width="10" height="200"/>
+  </g>
+  <text x="310" y="420" text-anchor="middle" font-family="monospace" font-size="18" fill="#6b8a86">bounce · 0:38</text>
+</svg>

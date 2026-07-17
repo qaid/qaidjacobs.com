@@ -68,7 +68,7 @@
 /* Show scroll indicator when essay has more content */
 .container-overlay.is-essay.has-scroll .essay-container-wrapper .scroll-indicator {
   opacity: 1;
-  animation: bounce 2s ease-in-out infinite;
+  animation: scroll-hint-drift 2s ease-in-out infinite;
 }
 
 /* Dark mode indicator */
@@ -94,12 +94,20 @@ html[data-theme="dark"] .essay-container-wrapper .scroll-indicator::after {
   color: rgba(255, 255, 255, 0.8);
 }
 
-@keyframes bounce {
+/* Gentle vertical drift on the scroll hint — smooth ease-in-out, not a bounce ease */
+@keyframes scroll-hint-drift {
   0%, 100% {
     transform: translateX(-50%) translateY(0px);
   }
   50% {
     transform: translateX(-50%) translateY(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container-overlay.is-essay.has-scroll .essay-container-wrapper .scroll-indicator,
+  .scroll-indicator {
+    animation: none;
   }
 }
 
@@ -213,12 +221,16 @@ html[data-theme="dark"] .container-overlay.is-essay .container-card::before {
 }
 
 .essay-content {
-  max-width: 65ch; /* Optimal reading width: 60-75 characters per line */
+  max-width: 68ch; /* Optimal reading width: 65-75 characters per line */
   margin: 0 auto;
   padding: var(--space-6) var(--space-4);
-  line-height: 1.75;
+  /* Body prose reads in Fira Sans for comfortable long-form reading; the
+     typewriter character (title, meta line, headings) keeps Courier Prime,
+     set explicitly on those elements below. */
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.72;
   color: var(--fg);
-  font-family: 'Courier Prime', 'Courier New', monospace;
   position: relative;
   z-index: 1;
 }

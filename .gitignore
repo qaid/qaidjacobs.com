@@ -20,3 +20,12 @@ pnp-debug.log*
 # env
 .env
 .env.local
+
+# generated site output
+js/
+node/
+sitemap.xml
+
+# local tooling
+.claude/
+.impeccable/

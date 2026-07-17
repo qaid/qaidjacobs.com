@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -88,8 +86,8 @@ button, input, textarea, select {
   border-radius: 50%;
   cursor: pointer;
   transition: background var(--transition), transform var(--transition);
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -195,15 +193,24 @@ html[data-theme="dark"] .nav-panel {
   transition: opacity 1000ms ease;
 }
 
-/* Constellation Design logo in footer */
+/* Constellation Design logo in footer.
+   Fade is driven by CSS transitions + classes (no persistent RAF loop):
+   - .is-shown → fade in fast
+   - default   → slow 10s fade out */
 .constellation-link {
   display: block;
   margin: 0 auto var(--space-4);
   width: fit-content;
   opacity: 0;
-  transition: opacity 1000ms ease;
+  transition: opacity 10000ms ease;
   pointer-events: none;
   text-decoration: none;
+}
+
+.constellation-link.is-shown {
+  opacity: 1;
+  transition: opacity 300ms ease;
+  pointer-events: auto;
 }
 
 .constellation-logo {
@@ -231,19 +238,6 @@ html[data-theme="dark"] .constellation-logo-dark {
   display: block;
 }
 
-/* Show logo on header hover */
-.site-header:hover ~ main .site-footer .constellation-link {
-  opacity: 1;
-  transition: opacity 1000ms ease;
-  pointer-events: auto;
-}
-
-/* Logo hover: show at full opacity with smooth transition */
-.constellation-link:hover {
-  opacity: 1 !important;
-  transition: opacity 180ms ease !important;
-}
-
 .container-block {
   padding: var(--space-8) var(--space-6);
   border-top: var(--border);
@@ -261,6 +255,37 @@ html[data-theme="dark"] .constellation-logo-dark {
   font-size: var(--size-sm);
   color: var(--muted);
   margin-bottom: var(--space-2);
+}
+
+/* ---- Container card header row ----
+   A real header row pins to the top of the card: the node-type label (eyebrow)
+   sits at the left, the close button at the right, both vertically centered in
+   the same row, with a clean divider under the whole row. The title lives below
+   the divider with comfortable spacing so it never straddles anything. Applies
+   to every container type (essay, durational, podcast, artifact, curiosity). */
+.container-overlay .container-card > .container-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;         /* matches the close button so the row is balanced */
+  margin: 0 0 var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border);
+}
+
+/* Eyebrow inside the header row: no band, no divider of its own — it is just
+   the label, vertically centered by the row's flex alignment. */
+.container-overlay .container-card > .container-header > .eyebrow {
+  margin: 0;
+}
+
+/* Title belongs to the body region below the divider: clear separation. */
+.container-overlay .container-card > .container-header + h2 {
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+  font-size: clamp(1.5rem, 3.2vw, 2rem);
+  line-height: 1.2;
 }
 
 .lede {
@@ -308,6 +333,19 @@ html[data-theme="dark"] .container-overlay {
   height: min(78vh, 780px);
   overflow: auto;
   pointer-events: auto;
+  /* Extra bottom room so the last line / scroll hint never crowds the card
+     edge, and the card as a whole keeps clearance from the footer logo. */
+  padding-bottom: var(--space-8);
+}
+
+/* In container mode the footer (© line + Constellation Design logo) must not
+   intersect the open card. The footer already lives quietly behind everything;
+   here we take it fully out of play so a header-hover fade-in can't surface the
+   logo across the card's bottom edge. */
+body.container-mode .site-footer {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden;
 }
 
 .container-overlay.is-essay .container-card {
@@ -338,6 +376,28 @@ html[data-theme="dark"] .container-card {
   background: rgba(13, 14, 15, 0.92);
 }
 
+/* ---- Smooth close ----
+   On close the card's CONTENT fades out first (fast), so nothing smears while
+   the card shrinks toward its origin node. The card SHELL (background/border/
+   shadow) then scales + fades together, driven from JS. These durations pair
+   with the JS timeline in animateCardToNodeAndClose. */
+.container-card.is-closing > * {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+/* The card shell's opacity is animated from JS (paired with the transform) so
+   the collapse reads as a single smooth scale+fade, never a one-frame vanish.
+   No shell opacity is set here on purpose — see animateCardToNodeAndClose. */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Reduced motion: crossfade only — no per-child content fade timing, the
+     overlay opacity transition carries the whole exit. */
+  .container-card.is-closing > * {
+    transition: none;
+  }
+}
+
 .container-overlay.is-curiosity.container-mode .container-card {
   overflow: hidden;
   display: flex;
@@ -346,12 +406,10 @@ html[data-theme="dark"] .container-card {
 }
 
 .container-close {
-  position: sticky;
-  top: var(--space-4);
-  left: 100%;
+  /* Lives inside the header row (see .container-header). margin-left:auto keeps
+     it pinned right even when the eyebrow is hidden (curiosity). */
+  flex: 0 0 auto;
   margin-left: auto;
-  margin-right: var(--space-4);
-  margin-bottom: calc(-40px - var(--space-4));
   width: 40px;
   height: 40px;
   border-radius: 999px;
@@ -379,5 +437,35 @@ html[data-theme="dark"] .container-card {
 
   .site-footer {
     padding: var(--space-6) var(--space-4);
+  }
+}
+
+/* Mobile containers: fill the viewport with an opaque surface so nothing
+   bleeds through, and give the card room to scroll on small screens. */
+@media (max-width: 768px) {
+  .container-overlay {
+    padding: 0;
+  }
+  .container-overlay.container-mode .container-card {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .essay-container-wrapper {
+    width: 100vw;
+    height: 100dvh;
+  }
+  /* Opaque paper on mobile — no translucency to show the landing behind. */
+  .container-overlay.is-essay .container-card {
+    background: #f8f6f0;
+  }
+  html[data-theme="dark"] .container-overlay.is-essay .container-card {
+    background: #1a1c1e;
+  }
+  /* Keep the header row (and its close button) clear of any device notch. */
+  .container-overlay .container-card > .container-header {
+    padding-top: env(safe-area-inset-top);
   }
 }

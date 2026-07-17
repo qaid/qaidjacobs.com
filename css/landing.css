@@ -7,15 +7,19 @@
   overflow: hidden;
 }
 
+/* Phrase floats in the upper area of the web (spec), out of the way of
+   the nodes and threads so the web reads as the center of attention. */
 .phrase {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: clamp(3rem, 11vh, 7rem);
   display: grid;
-  place-items: center;
+  justify-items: center;
   text-align: center;
   padding: 0 var(--space-6);
   pointer-events: none;
-  z-index: 2;
+  z-index: var(--z-phrase);
   transition: opacity 300ms ease;
 }
 
@@ -28,31 +32,32 @@ body.phrase-fade-in .phrase {
 }
 
 .phrase > div {
-  padding: 0.75rem 1.25rem;
-  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.08));
-  border-radius: 12px;
-  box-shadow: var(--shadow-soft);
+  padding: 0.5rem 1.25rem;
   max-width: min(720px, calc(100vw - (var(--space-6) * 2)));
-}
-
-html[data-theme="dark"] .phrase > div {
-  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15));
 }
 
 .phrase-text {
   display: block;
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  font-size: clamp(1.4rem, 3.4vw, 1.9rem);
   font-weight: 600;
   letter-spacing: -0.01em;
-  text-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
-  margin-bottom: 0.25rem;
+  text-shadow: 0 1px 2px var(--bg), 0 2px 14px var(--bg);
+  margin-bottom: 0.15rem;
+}
+
+.phrase-text.is-populated {
+  opacity: 1;
 }
 
 .phrase-by {
   display: block;
-  font-size: clamp(0.75rem, 2vw, 0.875rem);
+  font-family: var(--font-organic);
+  font-style: italic;
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
   color: var(--muted);
-  margin-top: 0;
+  margin-top: 0.15rem;
 }
 
 .web {
@@ -90,141 +95,240 @@ body.container-mode .web.dim {
   filter: none;
 }
 
-body.container-mode .thread,
 body.container-mode .particle {
   opacity: 0;
   pointer-events: none;
 }
 
+/* ============================================================
+   Node markers + labels
+   A node is a wrapper positioned by its center point, holding a
+   type-differentiated marker (glyph) and an always-visible label.
+   Threads carry vibrant color; nodes stay muted/neutral.
+   ============================================================ */
+
+.node {
+  position: absolute;
+  z-index: var(--z-node);
+  color: var(--node-default);
+  cursor: pointer;
+  transition: left 520ms ease, top 520ms ease, opacity 260ms ease;
+  will-change: left, top;
+}
+
+.node[data-type="essay"] { color: var(--node-essay); }
+.node[data-type="durational"] { color: var(--node-durational); }
+.node[data-type="curiosity"] { color: var(--node-curiosity); }
+.node[data-type="bio"] { color: var(--node-bio); }
+
+/* Bio marker: a soft outlined ring — the inert "About" node. */
+.node-dot[data-type="bio"] {
+  width: 17px;
+  height: 17px;
+  background: transparent;
+  border: 2px solid currentColor;
+  box-shadow: none;
+}
+
+/* Bio is inert: no pointer cursor, no hover scale-up. */
+.node[data-type="bio"] { cursor: default; }
+.node[data-type="bio"]:hover .node-dot,
+.node[data-type="bio"]:focus-visible .node-dot {
+  transform: translate(-50%, -50%);
+}
+
+/* Marker: centered on the node's coordinate */
 .node-dot {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  left: 0;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: var(--thread-questions);
-  color: var(--thread-questions);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: var(--shadow-md);
-  transition: transform 240ms ease, box-shadow 240ms ease, background 240ms ease, filter 240ms ease, left 520ms ease, top 520ms ease, opacity 260ms ease;
-  will-change: transform, left, top;
+  background: currentColor;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  transition: transform 240ms ease, box-shadow 240ms ease;
+  will-change: transform;
 }
 
-.node-dot[data-type="music"] {
-  background: var(--thread-music);
-  color: var(--thread-music);
+.node:hover .node-dot,
+.node:focus-visible .node-dot {
+  transform: translate(-50%, -50%) scale(1.18);
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.3);
 }
 
-.node-dot[data-type="movement"] {
-  background: var(--thread-movement);
-  color: var(--thread-movement);
+/* --- Per-type glyph differentiation --- */
+
+/* Essay: a page/leaf — rounded square with a "text" rule */
+.node-dot[data-type="essay"] {
+  width: 15px;
+  height: 18px;
+  border-radius: 3px;
+  background: currentColor;
+}
+.node-dot[data-type="essay"]::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 5px;
+  height: 1px;
+  background: var(--bg);
+  box-shadow: 0 4px 0 var(--bg), 0 8px 0 var(--bg);
+  opacity: 0.65;
 }
 
+/* Durational: a play ring — hollow circle with a center dot (sound/playback) */
+.node-dot[data-type="durational"] {
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: 2px solid currentColor;
+}
+.node-dot[data-type="durational"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+/* Artifact: a scrapbook pile — two offset stacked "photos" */
+.node-dot[data-type="artifact"] {
+  width: 16px;
+  height: 14px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(-4deg);
+}
+.node-dot[data-type="artifact"]::after {
+  content: "";
+  position: absolute;
+  inset: -3px 3px 3px -3px;
+  border-radius: 2px;
+  border: 1.5px solid currentColor;
+  background: var(--bg);
+  transform: rotate(7deg);
+}
+
+/* Curiosity: a small constellation — three clustered dots */
 .node-dot[data-type="curiosity"] {
-  background: var(--thread-curiosity);
-  color: var(--thread-curiosity);
-}
-
-body.container-mode .node-dot {
-  animation: none;
-}
-
-body.container-mode .node-dot.container-nav {
-  opacity: 1;
-  transform: scale(1.2);
-  cursor: pointer;
-}
-
-body.container-mode .node-dot.container-nav {
-  outline: 2px solid currentColor;
-  outline-offset: 3px;
-}
-
-body.container-mode .node-dot.container-nav {
-  opacity: 0.78;
+  width: 18px;
+  height: 18px;
   background: transparent;
-  filter: none;
-  border: none;
   box-shadow: none;
 }
-
-body.container-mode .node-dot.container-hidden {
-  opacity: 0;
-  background: transparent;
-  filter: none;
-  border: none;
-  box-shadow: none;
+.node-dot[data-type="curiosity"]::before,
+.node-dot[data-type="curiosity"]::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+}
+.node-dot[data-type="curiosity"]::before {
+  width: 6px;
+  height: 6px;
+  left: 1px;
+  top: 8px;
+  box-shadow: 10px 3px 0 -1px currentColor;
+}
+.node-dot[data-type="curiosity"]::after {
+  width: 7px;
+  height: 7px;
+  left: 6px;
+  top: 0;
 }
 
-body.container-mode .node-dot.container-active.container-hidden {
-  opacity: 0;
+/* --- Labels --- */
+.node-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0.62;
+  transition: opacity 220ms ease, transform 220ms ease;
 }
 
-body.container-mode .node-dot.container-active {
+/* Entrance reveal (discovery affordance): on first load the web fades in with
+   its labels at full strength, announcing "these are labeled, clickable
+   things," then settles to the ambient resting opacity. The .is-introducing
+   class is added at render and removed after a timeout (or on first
+   interaction); the long transition carries the labels down to rest. */
+.web.is-introducing .node-label {
   opacity: 1;
-  transform: scale(1.25);
+  transition: opacity 1200ms ease;
 }
 
-.node-dot:hover {
-  cursor: pointer;
-  transform: scale(1.1);
+.node[data-label-side="right"] .node-label {
+  left: 16px;
+  text-align: left;
+  align-items: flex-start;
+}
+.node[data-label-side="left"] .node-label {
+  right: 16px;
+  text-align: right;
+  align-items: flex-end;
 }
 
-.thread.visible {
+.node:hover .node-label,
+.node:focus-visible .node-label {
+  opacity: 1;
+}
+
+.node-label-kind {
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: currentColor;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+.node-label-title {
+  font-size: 0.86rem;
+  color: var(--fg);
+  font-weight: 500;
+  max-width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
+}
+
+/* --- Container mode states --- */
+body.container-mode .node .node-label {
+  opacity: 0;
+}
+
+body.container-mode .node.container-nav {
   opacity: 0.85;
 }
-
-.node-dot[data-type="music"] {
-  color: var(--thread-music);
-  background: var(--thread-music);
-  filter: drop-shadow(0 0 12px rgba(255, 122, 158, 0.4));
+body.container-mode .node.container-nav .node-dot {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+body.container-mode .node.container-nav .node-label {
+  opacity: 0.9;
 }
 
-.node-dot[data-type="movement"] {
-  color: var(--thread-movement);
-  background: var(--thread-movement);
-  filter: drop-shadow(0 0 12px rgba(79, 209, 197, 0.35));
-}
-
-.node-dot[data-type="curiosity"] {
-  color: var(--thread-curiosity);
-  background: var(--thread-curiosity);
-  filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.45));
-}
-
-.node-dot[data-type="essay"] {
-  color: var(--thread-essay);
-  background: var(--thread-essay);
-  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.45));
-}
-
-.node-dot[data-type="durational"] {
-  color: var(--thread-durational);
-  background: var(--thread-durational);
-  filter: drop-shadow(0 0 12px rgba(236, 72, 153, 0.45));
-}
-
-/* Bio node - black in light mode, white in dark mode */
-.node-dot[data-type="bio"] {
-  background: var(--fg);
-  color: var(--fg);
-  border: none;
-  filter: none;
-  box-shadow: none;
-  opacity: 0.7;
-  cursor: default;
-  transition: transform 240ms ease, opacity 240ms ease, left 520ms ease, top 520ms ease;
-}
-
-.node-dot[data-type="bio"]:hover {
-  opacity: 1;
-  transform: scale(1.15);
-  cursor: default;
-}
-
-/* Hide bio node when in container mode */
-body.container-mode .node-dot[data-type="bio"] {
+body.container-mode .node.container-hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+body.container-mode .node.container-active.container-hidden {
+  opacity: 0;
+}
+
+body.container-mode .node.container-active .node-dot {
+  transform: translate(-50%, -50%) scale(1.2);
 }
 
 .curiosity-stage {
@@ -285,6 +389,7 @@ html[data-theme="dark"] .curiosity-lines line {
   color: var(--fg);
   letter-spacing: -0.01em;
   white-space: nowrap;
+  text-transform: capitalize;
 }
 
 html[data-theme="dark"] .curiosity-center-pill {
@@ -314,7 +419,9 @@ html[data-theme="dark"] .curiosity-item {
 
 .curiosity-item .curiosity-label {
   font-size: var(--size-md);
-  color: var(--fg);
+  /* Inherit the thread color assigned to the item button (was overridden
+     by a flat --fg). Thread color now wins as intended. */
+  color: currentColor;
   opacity: 0.85;
   max-width: 260px;
   white-space: nowrap;
@@ -350,30 +457,8 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
   position: relative;
 }
 
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
 .node-dot.brownian {
   animation: none;
-  will-change: left, top;
-}
-
-.thread {
-  position: absolute;
-  height: 2px;
-  background: none;
-  opacity: 0;
-  overflow: visible;
-  pointer-events: none;
 }
 
 .particle {
@@ -385,6 +470,7 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
   opacity: 0;
   filter: blur(0.3px);
   will-change: transform, opacity;
+  z-index: var(--z-particle);
 }
 
 @keyframes particleFlow {
@@ -406,34 +492,141 @@ html[data-theme="dark"] .curiosity-item-linked:hover {
   }
 }
 
-.thread[data-thread="music"] {
-  background: linear-gradient(90deg, var(--thread-music), var(--thread-music));
-}
-
-.thread[data-thread="movement"] {
-  background: linear-gradient(90deg, var(--thread-movement), var(--thread-movement));
-}
-
-.thread[data-thread="questions"] {
-  background: linear-gradient(90deg, var(--thread-questions), var(--thread-questions));
-}
-
-@keyframes pulse {
-  0% { opacity: 0.3; }
-  50% { opacity: 0.9; }
-  100% { opacity: 0.3; }
-}
-
-@media (max-width: 640px) {
+/* ============================================================
+   Mobile adaptation (spec: "same content, simpler containers", ~768px)
+   The spatial dot-web becomes a conventional vertical list: phrase above,
+   nodes as tappable rows (glyph + type + title, thread-accented), bio
+   signature below. Same data, same click-through. Ambient motion is off
+   (handled in JS); nodes are laid out by flow, not absolute JS positions.
+   ============================================================ */
+@media (max-width: 768px) {
   .landing {
-    padding: var(--space-6) var(--space-4);
+    height: auto;
+    min-height: calc(100vh - var(--nav-height));
+    overflow: visible;
+    padding: 0;
   }
 
+  /* Phrase sits in normal flow at the top, no longer floating. */
   .phrase {
-    font-size: var(--size-xl);
+    position: static;
+    top: auto;
+    padding: clamp(2rem, 8vh, 3.5rem) var(--space-6) var(--space-4);
+    z-index: auto;
+  }
+  .phrase-text {
+    font-size: clamp(1.5rem, 6vw, 2rem);
   }
 
+  /* The web becomes a simple, scrollable column of node rows. */
   .web {
-    min-height: 320px;
+    position: static;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4) var(--space-6);
+    max-width: 560px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .web::after { content: none; }
+
+  /* Particles are desktop-spatial only; hide on mobile. */
+  .web .particle {
+    display: none;
+  }
+
+  /* A node becomes a full-width tappable row (>=44px target). Its inline
+     JS left/top are ignored under static positioning. */
+  .node {
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+    min-height: 60px;
+    padding: var(--space-3) var(--space-4);
+    background: var(--paper);
+    border: var(--border);
+    border-radius: var(--radius);
+    transition: background var(--transition);
+  }
+  .node:active {
+    background: color-mix(in srgb, var(--fg) 6%, var(--paper));
+  }
+
+  /* Marker sits inline at the row's start (not centered on a coordinate). */
+  .node-dot {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+  .node:hover .node-dot,
+  .node:focus-visible .node-dot {
+    transform: none;
+  }
+  /* Re-center type glyph pseudo-elements now that transforms are cleared. */
+  .node-dot[data-type="durational"]::after,
+  .node-dot[data-type="curiosity"]::before,
+  .node-dot[data-type="curiosity"]::after {
+    /* keep authored offsets; they read fine at this size */
+  }
+
+  /* Label always visible in the row, laid out inline. */
+  .node-label {
+    position: static;
+    top: auto;
+    transform: none;
+    opacity: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: normal;
+  }
+  .node[data-label-side="left"] .node-label,
+  .node[data-label-side="right"] .node-label {
+    left: auto;
+    right: auto;
+    text-align: left;
+    align-items: flex-start;
+  }
+  .node-label-title {
+    max-width: none;
+    white-space: normal;
+  }
+
+  /* When a container is open on mobile it fills the viewport — the flowed
+     landing list would otherwise bleed through the card. Hide the landing
+     (its own sibling; the fixed container-overlay stays on top). */
+  body.container-mode .landing {
+    visibility: hidden;
+  }
+}
+
+/* ============================================================
+   Reduced motion: no drift, no particle streams,
+   container open/close collapses to a crossfade. JS also skips the
+   motion loops; this covers the CSS-driven transitions.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .node,
+  .node-dot,
+  .node-label,
+  .web,
+  .phrase {
+    transition: opacity 120ms linear !important;
+    animation: none !important;
+  }
+  .node:hover .node-dot,
+  .node:focus-visible .node-dot {
+    transform: translate(-50%, -50%) !important;
+  }
+  .particle {
+    display: none !important;
   }
 }

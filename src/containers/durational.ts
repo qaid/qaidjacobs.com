@@ -8,6 +8,7 @@ import type { DurationalData, DurationalMedia } from '../types';
 import { clearContainerContent, updateContainerHeader, registerRenderer } from './base';
 import { loadJSON } from '../utils/data';
 import { createElement } from '../utils/dom';
+import { prefersReducedMotion } from '../utils/env';
 
 // Particle state
 interface ParticleState {
@@ -21,6 +22,111 @@ interface ParticleState {
 let particleStates: ParticleState[] = [];
 let animationFrameId: number | null = null;
 let containerRect: { width: number; height: number } | null = null;
+
+// The container element whose saturation/accent we modulate over playback.
+let activeContentEl: HTMLElement | null = null;
+// SoundCloud Widget handle (when the API is available).
+let scWidget: SoundCloudWidget | null = null;
+
+// Render generation counter: bumped on every render() and cleanup() so an
+// in-flight wireSoundCloudCurve() from a closed/reopened container can tell
+// it's stale and bail instead of clobbering the live widget/content element.
+let renderGeneration = 0;
+
+// --- SoundCloud Widget API (progressive enhancement) ---
+const SC_API_SRC = 'https://w.soundcloud.com/player/api.js';
+
+interface SoundCloudWidget {
+  bind(event: string, handler: (e: { relativePosition?: number }) => void): void;
+  unbind(event: string): void;
+}
+interface SoundCloudWidgetAPI {
+  Widget: {
+    (iframe: HTMLIFrameElement): SoundCloudWidget;
+    Events: { PLAY_PROGRESS: string; FINISH: string };
+  };
+}
+
+let scApiPromise: Promise<SoundCloudWidgetAPI | null> | null = null;
+
+/**
+ * Load the SoundCloud Widget API once. Resolves to null when unavailable
+ * (offline / blocked), so callers degrade gracefully.
+ */
+function loadSoundCloudApi(): Promise<SoundCloudWidgetAPI | null> {
+  if (scApiPromise) return scApiPromise;
+
+  scApiPromise = new Promise((resolve) => {
+    const w = window as unknown as { SC?: SoundCloudWidgetAPI };
+    if (w.SC?.Widget) {
+      resolve(w.SC);
+      return;
+    }
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${SC_API_SRC}"]`);
+    const onReady = () => resolve((window as unknown as { SC?: SoundCloudWidgetAPI }).SC || null);
+    if (existing) {
+      existing.addEventListener('load', onReady);
+      existing.addEventListener('error', () => resolve(null));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = SC_API_SRC;
+    script.async = true;
+    script.addEventListener('load', onReady);
+    script.addEventListener('error', () => resolve(null));
+    document.head.appendChild(script);
+  });
+
+  return scApiPromise;
+}
+
+/**
+ * Saturation curve: lowest at the start, peaks at the middle, lowest at
+ * the end (discovery.md). progress is a 0..1 playback fraction.
+ */
+function saturationCurve(progress: number): number {
+  const p = Math.max(0, Math.min(1, progress));
+  // sin(pi * p): 0 → 1 → 0. Keep a calm floor so it never fully deadens.
+  return 0.25 + 0.75 * Math.sin(Math.PI * p);
+}
+
+/**
+ * Apply the current intensity to the container: drives particle saturation
+ * and opacity plus the container accent via a CSS custom property.
+ */
+function applyIntensity(intensity: number): void {
+  if (!activeContentEl) return;
+  activeContentEl.style.setProperty('--durational-intensity', intensity.toFixed(3));
+}
+
+/**
+ * Wire the SoundCloud widget's PLAY_PROGRESS to the saturation curve.
+ * No-op (with a calm default) when the API is unavailable.
+ */
+async function wireSoundCloudCurve(iframe: HTMLIFrameElement): Promise<void> {
+  const generation = renderGeneration;
+  applyIntensity(saturationCurve(0));
+
+  const SC = await loadSoundCloudApi();
+  if (generation !== renderGeneration) return; // Stale: container closed/reopened since.
+  if (!SC?.Widget) return; // Offline / blocked → keep the calm default.
+
+  try {
+    const widget = SC.Widget(iframe);
+    widget.bind(SC.Widget.Events.PLAY_PROGRESS, (e) => {
+      if (generation !== renderGeneration) return;
+      applyIntensity(saturationCurve(e.relativePosition ?? 0));
+    });
+    widget.bind(SC.Widget.Events.FINISH, () => {
+      if (generation !== renderGeneration) return;
+      applyIntensity(saturationCurve(1));
+    });
+    if (generation !== renderGeneration) return; // Bail before assigning module state.
+    scWidget = widget;
+  } catch {
+    if (generation === renderGeneration) scWidget = null;
+  }
+}
 
 /**
  * Extract YouTube video ID from URL
@@ -142,6 +248,10 @@ function animateParticles(): void {
  * Start lazy drifting particles with even distribution
  */
 function startParticles(container: HTMLElement): void {
+  // Brownian particle background is atmosphere, not information — skip it
+  // entirely when the user asked for reduced motion.
+  if (prefersReducedMotion()) return;
+
   const particleCount = 40;
   particleStates = [];
 
@@ -179,13 +289,14 @@ function startParticles(container: HTMLElement): void {
     particle.style.top = '0';
     particle.style.transform = `translate(${x}px, ${y}px)`;
 
-    // Larger, more visible particles
-    const size = 3 + Math.random() * 4;
+    // Larger, more visible particles — sized so they read over the warm card
+    // even at the resting intensity.
+    const size = 4 + Math.random() * 5;
     particle.style.width = `${size}px`;
     particle.style.height = `${size}px`;
 
-    // Higher opacity for better visibility
-    particle.style.opacity = `${0.5 + Math.random() * 0.4}`;
+    // Higher opacity for better visibility at rest.
+    particle.style.opacity = `${0.65 + Math.random() * 0.35}`;
 
     container.appendChild(particle);
     particleStates.push({ el: particle, x, y, vx, vy });
@@ -218,6 +329,7 @@ function formatSubtype(subtype?: string): string {
 
 export const durationalRenderer: ContainerRenderer = {
   async render(nodeId: string, cardEl: HTMLElement): Promise<void> {
+    renderGeneration += 1;
     clearContainerContent(cardEl);
 
     // Load durational data
@@ -231,6 +343,9 @@ export const durationalRenderer: ContainerRenderer = {
 
     // Create main container
     const container = createElement('div', { className: 'durational-content' });
+    activeContentEl = container;
+    // Start calm; the playback curve modulates this if the widget wires up.
+    container.style.setProperty('--durational-intensity', saturationCurve(0).toFixed(3));
 
     // Create particle background
     const particleBg = createElement('div', { className: 'durational-particles' });
@@ -238,8 +353,14 @@ export const durationalRenderer: ContainerRenderer = {
 
     // Create media player wrapper
     const playerWrapper = createElement('div', { className: 'durational-player' });
-    playerWrapper.appendChild(createEmbed(data.media));
+    const embed = createEmbed(data.media) as HTMLIFrameElement;
+    playerWrapper.appendChild(embed);
     container.appendChild(playerWrapper);
+
+    // Modulate saturation over playback (SoundCloud only; graceful otherwise).
+    if (data.media.source === 'soundcloud') {
+      wireSoundCloudCurve(embed);
+    }
 
     // Create description section below player (single content area)
     const descriptionText = data.description || data.commentary || '';
@@ -263,7 +384,21 @@ export const durationalRenderer: ContainerRenderer = {
   },
 
   cleanup(): void {
+    renderGeneration += 1;
     stopParticles();
+    if (scWidget) {
+      try {
+        const SC = (window as unknown as { SC?: SoundCloudWidgetAPI }).SC;
+        if (SC?.Widget?.Events) {
+          scWidget.unbind(SC.Widget.Events.PLAY_PROGRESS);
+          scWidget.unbind(SC.Widget.Events.FINISH);
+        }
+      } catch {
+        /* ignore */
+      }
+      scWidget = null;
+    }
+    activeContentEl = null;
   },
 };
 

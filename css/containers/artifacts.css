@@ -1,0 +1,296 @@
+/**
+ * Creative Artifacts (scrapbook) container styles
+ * Atmosphere: moodboard / scrapbook. Items feel placed, not gridded —
+ * slight rotations, offsets, paper-adjacent treatment. No card grids.
+ */
+
+:root {
+  /* Handwritten/organic font. A sibling agent owns the real token; this is a
+     standalone-safe fallback chain so the container works on its own. */
+  --font-organic: "Source Serif 4", Georgia, serif;
+
+  /* Scrapbook surface — warm paper in light mode */
+  --artifact-bg: #efe7d6;
+  --artifact-paper: #faf6ec;
+  --artifact-tape: rgba(210, 190, 150, 0.55);
+  --artifact-ink: #3a2f24;
+  --artifact-note: #5b4a34;
+  --artifact-frame: rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --artifact-bg: #201d1a;
+    --artifact-paper: #2a2622;
+    --artifact-tape: rgba(120, 100, 70, 0.4);
+    --artifact-ink: #ece3d3;
+    --artifact-note: #d8c7a8;
+    --artifact-frame: rgba(255, 255, 255, 0.08);
+  }
+}
+
+[data-theme="dark"] {
+  --artifact-bg: #201d1a;
+  --artifact-paper: #2a2622;
+  --artifact-tape: rgba(120, 100, 70, 0.4);
+  --artifact-ink: #ece3d3;
+  --artifact-note: #d8c7a8;
+  --artifact-frame: rgba(255, 255, 255, 0.08);
+}
+
+/* Center the container in the viewport, roomy for a scattered board */
+.container-overlay.is-artifact .essay-container-wrapper {
+  width: min(1100px, 94vw);
+  height: min(82vh, 820px);
+}
+
+.container-overlay.is-artifact .container-card {
+  position: relative;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(0, 0, 0, 0.03), transparent 45%),
+    radial-gradient(circle at 82% 78%, rgba(0, 0, 0, 0.03), transparent 42%),
+    var(--artifact-bg);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.container-overlay.is-artifact .container-card::-webkit-scrollbar {
+  display: none;
+}
+
+.container-overlay.is-artifact .lede {
+  display: none;
+}
+
+/* Eyebrow reads as a scrapbook label */
+.container-overlay.is-artifact .eyebrow {
+  font-family: var(--font-organic);
+  font-style: italic;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+}
+
+.container-overlay.is-artifact h2 {
+  font-family: var(--font-organic);
+  font-style: italic;
+  letter-spacing: 0.01em;
+}
+
+/* Content */
+.artifacts-content {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-4) var(--space-2) var(--space-8);
+}
+
+.artifacts-intro {
+  font-family: var(--font-organic);
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--artifact-note);
+  max-width: 46ch;
+  margin: 0 auto var(--space-8);
+  transform: rotate(-1.2deg);
+  text-align: center;
+}
+
+/* The board: a loose, hand-placed pile. Not a rigid grid — items lean into
+   each other with overlap via negative margins and per-item tilt. */
+.artifacts-board {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(1.25rem, 3vw, 2.5rem) clamp(0.75rem, 2vw, 1.75rem);
+  padding: var(--space-4) clamp(0.5rem, 2vw, 1.5rem);
+}
+
+.artifact-item {
+  position: relative;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 220ms ease, filter 220ms ease;
+  will-change: transform;
+  margin-top: clamp(0px, 2vw, 24px);
+}
+
+/* Stagger vertical rhythm so rows don't line up like a grid */
+.artifact-item:nth-child(3n) { margin-top: clamp(18px, 4vw, 56px); }
+.artifact-item:nth-child(4n) { margin-top: clamp(6px, 2vw, 28px); }
+.artifact-item:nth-child(5n) { margin-top: 0; }
+
+.artifact-item:hover {
+  transform: rotate(calc(var(--tilt, 0deg) * 0.35)) scale(1.02);
+  z-index: 5;
+}
+
+/* ---- Photo stack ---- */
+.artifact-photo-stack {
+  position: relative;
+  display: block;
+  width: clamp(190px, 22vw, 280px);
+  height: clamp(180px, 24vw, 260px);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  appearance: none;
+}
+
+.artifact-photo-stack:focus-visible {
+  outline: 3px solid var(--thread-questions);
+  outline-offset: 6px;
+  border-radius: 6px;
+}
+
+.artifact-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* White photo border + tape/paper feel */
+  background: var(--artifact-paper);
+  padding: 10px 10px 34px;
+  box-sizing: border-box;
+  border-radius: 3px;
+  box-shadow: var(--shadow-sm);
+  transform:
+    translate(var(--layer-x, 0px), var(--layer-y, 0px))
+    rotate(var(--layer-angle, 0deg));
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.3, 1), opacity 200ms ease;
+  user-select: none;
+}
+
+/* Single image (sketch / painting / lone photo) reuses the polaroid frame */
+.artifact-image {
+  width: clamp(190px, 22vw, 280px);
+}
+
+.artifact-image .artifact-photo {
+  position: static;
+  height: auto;
+  transform: none;
+}
+
+.artifact-photo.is-top {
+  box-shadow: var(--shadow-md);
+}
+
+/* Little snap when a photo drops to the back of the pile */
+.artifact-photo.is-flipping {
+  transform:
+    translate(var(--layer-x, 0px), calc(var(--layer-y, 0px) - 10px))
+    rotate(var(--layer-angle, 0deg)) scale(1.03);
+}
+
+/* Count badge */
+.artifact-stack-count {
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  z-index: 20;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--thread-questions);
+  color: #201d1a;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+}
+
+/* ---- Audio (native controls, minimal) ---- */
+.artifact-audio {
+  width: clamp(230px, 26vw, 320px);
+  padding: 14px 16px 16px;
+  background: var(--artifact-paper);
+  border-radius: 4px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--artifact-frame);
+}
+
+.artifact-audio-label {
+  display: block;
+  font-family: var(--font-organic);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--artifact-note);
+  margin-bottom: 8px;
+  transform: rotate(-1deg);
+}
+
+.artifact-audio-el {
+  width: 100%;
+  height: 38px;
+  display: block;
+}
+
+/* ---- Notes ---- */
+.artifact-note {
+  font-family: var(--font-organic);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--artifact-note);
+  max-width: 22ch;
+  margin: 14px auto 0;
+  text-align: center;
+  transform: rotate(var(--note-angle, 0deg));
+}
+
+/* Tape strip decoration on photo stacks and images */
+.artifact-item.is-photo-stack::before,
+.artifact-item.is-image::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 78px;
+  height: 26px;
+  transform: translateX(-50%) rotate(-3deg);
+  background: var(--artifact-tape);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  z-index: 15;
+  pointer-events: none;
+}
+
+.artifact-item:nth-child(even).is-photo-stack::before,
+.artifact-item:nth-child(even).is-image::before {
+  transform: translateX(-50%) rotate(4deg);
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .artifact-item,
+  .artifact-photo {
+    transition: none;
+  }
+  .artifact-item:hover {
+    transform: rotate(var(--tilt, 0deg));
+  }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 700px) {
+  .artifacts-board {
+    gap: 2rem 1rem;
+  }
+  .artifact-item,
+  .artifact-item:nth-child(3n),
+  .artifact-item:nth-child(4n) {
+    margin-top: 8px;
+  }
+  .artifact-photo-stack,
+  .artifact-image {
+    width: min(76vw, 300px);
+  }
+}

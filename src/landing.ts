@@ -7,6 +7,7 @@ import type { Node, NodePx, Thread, Phrase } from './types';
 import { closeEssay, focusEssay } from './main';
 import { loadJSON } from './utils/data';
 import { getById, query } from './utils/dom';
+import { prefersReducedMotion } from './utils/env';
 import { get, set, DOT_SIZE } from './state/store';
 import {
   initPhrase,
@@ -18,7 +19,6 @@ import {
 } from './components/phrase';
 import {
   renderWeb,
-  getThreadElements,
   getDotElements,
   getCurrentNodesPx,
   setDotContainerMode,
@@ -32,6 +32,7 @@ import { getRendererForNode, clearContainerContent, setContainerType } from './c
 import './containers/essay';
 import './containers/curiosity';
 import './containers/durational';
+import './containers/artifacts';
 
 // DOM elements
 const webEl = getById('landing-web');
@@ -45,6 +46,9 @@ const curiosityCentralById = new Map<string, string>();
 // Animation and state flags
 let isAnimatingContainer = false;
 let refreshCuriosityLines: (() => void) | null = null;
+// The node element that opened the current container — focus returns here on
+// close (accessibility: focus management).
+let originatingNodeEl: HTMLElement | null = null;
 
 // URL routing
 const NODE_ROUTE_PREFIX = '#/node/';
@@ -58,6 +62,26 @@ function getNodeIdFromUrl(): string | null {
     return hash.slice(NODE_ROUTE_PREFIX.length);
   }
   return null;
+}
+
+/**
+ * Whether a node ID can be opened as a container: it must exist in the
+ * manifest and not be a type with no container renderer (bio is a landing
+ * hover-only interaction, not an openable container).
+ */
+function canOpenNode(nodeId: string): boolean {
+  const node = get('nodes').find((n) => n.id === nodeId);
+  return !!node && node.type !== 'bio';
+}
+
+/**
+ * Strip the node hash from the URL without leaving history clutter, and
+ * stay on the landing page.
+ */
+function clearInvalidNodeHash(): void {
+  if (window.location.hash) {
+    history.replaceState({}, '', window.location.pathname);
+  }
 }
 
 /**
@@ -86,12 +110,20 @@ function handlePopState(): void {
 
   if (nodeId && !isContainerMode) {
     // URL has node but container is closed - open it
+    if (!canOpenNode(nodeId)) {
+      clearInvalidNodeHash();
+      return;
+    }
     focusEssay(nodeId);
   } else if (!nodeId && isContainerMode && activeNodeId) {
     // URL has no node but container is open - close it
     requestCloseContainer();
   } else if (nodeId && isContainerMode && nodeId !== activeNodeId) {
     // Different node in URL - switch to it
+    if (!canOpenNode(nodeId)) {
+      clearInvalidNodeHash();
+      return;
+    }
     set('pendingNodeId', nodeId);
     set('isNodeSwitching', true);
     hidePhrase();
@@ -114,6 +146,7 @@ async function setOverlayContent(nodeId: string): Promise<void> {
 
   if (eyebrow) eyebrow.textContent = node.type ? `Container: ${node.type}` : 'Container';
   if (titleEl) titleEl.textContent = node.title || node.id;
+  document.title = `${node.title || node.id} — Qa'id Jacobs`;
 
   // Set container type classes
   setContainerType(overlayEl, node);
@@ -142,6 +175,18 @@ async function setOverlayContent(nodeId: string): Promise<void> {
  */
 function animateCardFromNode(nodeId: string): void {
   if (!cardEl) return;
+
+  // Reduced motion: no scale/morph FLIP — the overlay's opacity transition
+  // is the whole entrance (a crossfade). Just settle the card and finish.
+  if (prefersReducedMotion()) {
+    cardEl.style.transition = 'none';
+    cardEl.style.transform = '';
+    cardEl.style.borderRadius = '';
+    isAnimatingContainer = false;
+    if (typeof refreshCuriosityLines === 'function') refreshCuriosityLines();
+    return;
+  }
+
   const dotElements = getDotElements();
   const dot = dotElements.get(nodeId);
   if (!dot) return;
@@ -184,6 +229,29 @@ function animateCardToNodeAndClose(nodeId: string): void {
     return;
   }
 
+  // Reduced motion: skip the collapse-to-dot FLIP; crossfade out via the
+  // overlay opacity transition, then run the same post-close bookkeeping.
+  if (prefersReducedMotion()) {
+    isAnimatingContainer = false;
+    closeEssay();
+
+    const isNodeSwitching = get('isNodeSwitching');
+    const pendingNodeId = get('pendingNodeId');
+    if (isNodeSwitching && pendingNodeId) {
+      const targetId = pendingNodeId;
+      set('pendingNodeId', null);
+      set('isNodeSwitching', false);
+      window.setTimeout(() => focusEssay(targetId), 60);
+    } else {
+      showPhraseSlow();
+    }
+
+    cardEl.style.transition = 'none';
+    cardEl.style.transform = '';
+    cardEl.style.borderRadius = '';
+    return;
+  }
+
   const dotElements = getDotElements();
   const dot = dotElements.get(nodeId);
   if (!dot) {
@@ -195,14 +263,23 @@ function animateCardToNodeAndClose(nodeId: string): void {
   const from = cardEl.getBoundingClientRect();
 
   isAnimatingContainer = true;
-  cardEl.style.transformOrigin = 'top left';
-  cardEl.style.transition = 'transform 420ms ease, border-radius 420ms ease';
-  cardEl.style.borderRadius = '999px';
-  cardEl.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${Math.max(0.01, to.width / from.width)}, ${Math.max(0.01, to.height / from.height)})`;
 
-  const onEnd = (e: TransitionEvent) => {
-    if (e.propertyName !== 'transform' || !cardEl) return;
-    cardEl.removeEventListener('transitionend', onEnd);
+  // Timeline:
+  //   0ms    : content fades out (.is-closing → children opacity 0, 150ms)
+  //   ~120ms : card shell begins scaling + fading toward the origin dot
+  //   ~560ms : scale/fade done → tear down (remove classes, reset styles)
+  // Fading the content first means nothing smears while the card shrinks; the
+  // shell's opacity accompanies its transform so the collapse is one smooth
+  // scale+fade, and no classes are removed until the card is fully hidden.
+  const CONTENT_FADE = 150;
+  const SCALE_DUR = 440;
+  const SCALE_DELAY = 120;
+
+  // Kick off the content fade immediately.
+  cardEl.classList.add('is-closing');
+
+  const finish = (): void => {
+    if (!cardEl) return;
     isAnimatingContainer = false;
     closeEssay();
 
@@ -215,20 +292,52 @@ function animateCardToNodeAndClose(nodeId: string): void {
       window.setTimeout(() => {
         set('isNodeSwitching', false);
         focusEssay(targetId);
-      }, 420);
+      }, 60);
     } else {
       showPhraseSlow();
     }
 
-    window.setTimeout(() => {
-      if (!cardEl) return;
-      cardEl.style.transition = 'none';
-      cardEl.style.transform = '';
-      cardEl.style.borderRadius = '';
-      cardEl.style.transition = '';
-    }, 260);
+    // Reset all inline animation styles only now that the card is hidden, so no
+    // property snaps back into view mid-fade.
+    cardEl.style.transition = 'none';
+    cardEl.style.transform = '';
+    cardEl.style.borderRadius = '';
+    cardEl.style.opacity = '';
+    cardEl.classList.remove('is-closing');
+    // Force the reset to commit before transitions are re-enabled next open.
+    cardEl.getBoundingClientRect();
+    cardEl.style.transition = '';
+  };
+
+  // After the content has begun fading, scale + fade the shell to the dot.
+  window.setTimeout(() => {
+    if (!cardEl) return;
+    cardEl.style.transformOrigin = 'top left';
+    cardEl.style.transition =
+      `transform ${SCALE_DUR}ms ease, border-radius ${SCALE_DUR}ms ease, opacity ${SCALE_DUR}ms ease`;
+    cardEl.style.borderRadius = '999px';
+    cardEl.style.transform = `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${Math.max(0.01, to.width / from.width)}, ${Math.max(0.01, to.height / from.height)})`;
+    // Shell opacity accompanies the transform: fades as it shrinks so the
+    // collapse is one smooth scale+fade rather than a hard cut.
+    cardEl.style.opacity = '0';
+  }, SCALE_DELAY);
+
+  // Drive teardown off the transform transitionend, with a timeout fallback so
+  // a missed event can never strand the overlay open.
+  let done = false;
+  const onEnd = (e: TransitionEvent): void => {
+    if (e.propertyName !== 'transform' || done || !cardEl) return;
+    done = true;
+    cardEl.removeEventListener('transitionend', onEnd);
+    finish();
   };
   cardEl.addEventListener('transitionend', onEnd);
+  window.setTimeout(() => {
+    if (done || !cardEl) return;
+    done = true;
+    cardEl.removeEventListener('transitionend', onEnd);
+    finish();
+  }, CONTENT_FADE + SCALE_DELAY + SCALE_DUR + 80);
 }
 
 /**
@@ -336,10 +445,20 @@ async function enterContainerMode(nodeId: string): Promise<void> {
   // Update URL
   updateUrlForNode(nodeId);
 
+  // Remember which node to return focus to on close.
+  originatingNodeEl = getDotElements().get(nodeId) || null;
+
   hidePhrase();
   await setOverlayContent(nodeId);
   applyContainerModeLayout(nodeId);
   animateCardFromNode(nodeId);
+
+  // Move focus into the opened container (accessibility: focus management).
+  // Prefer the close button so Tab order starts at a real control and Esc /
+  // Enter behave predictably.
+  window.setTimeout(() => {
+    (closeBtnEl || cardEl)?.focus?.();
+  }, 60);
 
   // Check scroll indicator after content loads
   setTimeout(() => {
@@ -356,6 +475,7 @@ async function enterContainerMode(nodeId: string): Promise<void> {
 function exitContainerMode(): void {
   set('isContainerMode', false);
   set('activeNodeId', null);
+  document.title = 'Qaid Jacobs';
 
   // Update URL
   updateUrlForNode(null);
@@ -372,6 +492,14 @@ function exitContainerMode(): void {
   resetDotPositions();
   resumeAllMotion();
   refreshCuriosityLines = null;
+
+  // Return focus to the node that opened the container.
+  const returnTo = originatingNodeEl;
+  originatingNodeEl = null;
+  if (returnTo) {
+    // Defer so it lands after the close animation settles.
+    window.setTimeout(() => returnTo.focus?.(), 60);
+  }
 }
 
 /**
@@ -379,11 +507,6 @@ function exitContainerMode(): void {
  */
 function handleNodeClick(node: NodePx): void {
   if (isAnimatingContainer) return;
-
-  // Bio node doesn't open a container
-  if (node.type === 'bio') {
-    return;
-  }
 
   const isContainerMode = get('isContainerMode');
   const activeNodeId = get('activeNodeId');
@@ -407,20 +530,20 @@ function handleNodeClick(node: NodePx): void {
  */
 function handleNodeHoverEnter(node: NodePx): void {
   if (!webEl) return;
-  const nodesPx = getCurrentNodesPx();
-  const threadElements = getThreadElements();
-  const dotElements = getDotElements();
-  pauseMotion(node.id);
-  startParticleStreams(node.id, nodesPx, threadElements, webEl, dotElements);
 
-  // Bio node: show bio text in phrase area
+  // Bio is an inert "About" node: hovering (or focusing) it reveals the bio
+  // text in the phrase area instead of running particle streams.
   if (node.type === 'bio') {
-    console.log('Bio hover:', node.id, 'bioText:', node.bioText);
-    if (node.bioText) {
-      showCustomPhrase(node.bioText);
-    }
+    const text = (node.bioText || '').replace(/\s*\n+\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    if (text) showCustomPhrase(text);
     return;
   }
+
+  const nodesPx = getCurrentNodesPx();
+  const connections = get('threads');
+  const dotElements = getDotElements();
+  pauseMotion(node.id);
+  startParticleStreams(node.id, nodesPx, connections, webEl, dotElements);
 
   // Load curiosity central label
   if (node.type === 'curiosity') {
@@ -447,13 +570,40 @@ function handleNodeHoverEnter(node: NodePx): void {
  * Handle node dot hover leave
  */
 function handleNodeHoverLeave(node: NodePx): void {
-  stopParticleStreams(node.id);
-  resumeMotion(node.id);
-
-  // Bio node: restore original phrase
   if (node.type === 'bio') {
     restorePhrase();
+    return;
   }
+  stopParticleStreams(node.id);
+  resumeMotion(node.id);
+}
+
+/**
+ * Entrance reveal: hold the web's node labels at full strength while the web
+ * fades in, then settle them to their ambient resting opacity after ~2.5s.
+ * The bright hold ends early on the first pointer/keyboard interaction, so a
+ * visitor who engages immediately isn't fighting a transition. Purely an
+ * opacity settle — reduced-motion is respected by the CSS (which collapses
+ * the transition to a short crossfade) with no extra motion added here.
+ */
+function playEntranceReveal(): void {
+  if (!webEl) return;
+  webEl.classList.add('is-introducing');
+
+  let settled = false;
+  const settle = (): void => {
+    if (settled) return;
+    settled = true;
+    webEl.classList.remove('is-introducing');
+    window.clearTimeout(timer);
+    window.removeEventListener('pointerdown', settle);
+    window.removeEventListener('keydown', settle);
+  };
+
+  const timer = window.setTimeout(settle, 2500);
+  // First interaction settles the web immediately.
+  window.addEventListener('pointerdown', settle, { once: true });
+  window.addEventListener('keydown', settle, { once: true });
 }
 
 /**
@@ -484,14 +634,19 @@ async function initLanding(): Promise<void> {
       onHoverLeave: handleNodeHoverLeave,
     });
 
+    // Entrance reveal: labels render at full strength, then settle to their
+    // ambient resting opacity after ~2.5s — so a first-time visitor reads
+    // "these are labeled, clickable things" before the landing goes quiet.
+    playEntranceReveal();
+
     // Check URL for initial node to open
     const initialNodeId = getNodeIdFromUrl();
     if (initialNodeId) {
-      // Verify node exists
-      const nodeExists = nodesData.some((n) => n.id === initialNodeId);
-      if (nodeExists) {
+      if (canOpenNode(initialNodeId)) {
         // Small delay to ensure DOM is ready
         setTimeout(() => focusEssay(initialNodeId), 100);
+      } else {
+        clearInvalidNodeHash();
       }
     }
   } catch (err) {
@@ -521,6 +676,14 @@ document.addEventListener('pointerdown', (e) => {
   if (target?.closest?.('.node-dot')) return;
   if (target?.closest?.('.theme-toggle')) return;
   if (target?.closest?.('.site-header')) return;
+  requestCloseContainer();
+});
+
+// Esc closes an open container. (The nav overlay stops propagation when it
+// is the thing open, so these never collide.)
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!get('isContainerMode')) return;
   requestCloseContainer();
 });
 

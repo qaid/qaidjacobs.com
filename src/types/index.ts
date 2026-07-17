@@ -1,5 +1,12 @@
 // Node types
-export type NodeType = 'essay' | 'music' | 'movement' | 'curiosity' | 'durational' | 'bio';
+export type NodeType =
+  | 'essay'
+  | 'music'
+  | 'movement'
+  | 'curiosity'
+  | 'durational'
+  | 'artifact'
+  | 'bio';
 
 export type ThreadType = 'music' | 'movement' | 'questions';
 
@@ -76,6 +83,40 @@ export interface DurationalData {
   commentary?: string;
   created?: string;
   threads: ThreadType[];
+}
+
+// Creative Artifacts (scrapbook) container data
+export type ArtifactItemKind = 'photo-stack' | 'audio' | 'image';
+
+export interface ArtifactItem {
+  /** Which presentation this item uses */
+  kind: ArtifactItemKind;
+  /** Single image source (kind: 'image') */
+  src?: string;
+  /** Layered image sources, top-to-bottom (kind: 'photo-stack') */
+  srcs?: string[];
+  /** Audio source (kind: 'audio') */
+  audio?: string;
+  /** Optional alt text for images */
+  alt?: string;
+  /** Optional handwritten note placed near the item */
+  note?: string;
+  /** Optional caption/label (e.g. for an audio clip) */
+  label?: string;
+  /** Rotation in degrees for hand-placed feel (overrides deterministic default) */
+  angle?: number;
+}
+
+export interface ArtifactData {
+  id: string;
+  title: string;
+  type: 'artifact';
+  subtype?: string;
+  /** Optional intro note shown at the top of the scrapbook */
+  intro?: string;
+  items: ArtifactItem[];
+  created?: string;
+  threads?: ThreadType[];
 }
 
 // Essay node data (extended from node JSON)

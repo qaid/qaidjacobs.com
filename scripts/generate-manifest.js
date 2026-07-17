@@ -11,6 +11,51 @@ import { join } from 'path';
 
 const NODES_DIR = 'content/nodes';
 const NODES_FILE = 'content/nodes/landing-nodes.json';
+const CONNECTIONS_FILE = 'content/connections.json';
+
+/**
+ * Validate that every connection references a node that exists.
+ * A dangling reference means the web silently drops a thread at runtime,
+ * so this fails the build loudly rather than shipping a broken web.
+ */
+async function validateConnections(nodeIds) {
+  let raw;
+  try {
+    raw = await readFile(CONNECTIONS_FILE, 'utf-8');
+  } catch {
+    console.warn(`   ⚠️  No ${CONNECTIONS_FILE} found — skipping connection validation`);
+    return;
+  }
+
+  let connections;
+  try {
+    connections = JSON.parse(raw);
+  } catch (error) {
+    console.error(`\n❌ ${CONNECTIONS_FILE} is not valid JSON: ${error.message}`);
+    process.exit(1);
+  }
+
+  const known = new Set(nodeIds);
+  const problems = [];
+
+  connections.forEach((conn, i) => {
+    for (const end of ['from', 'to']) {
+      if (!known.has(conn[end])) {
+        problems.push(`   ✗ connection #${i} references unknown node "${conn[end]}" (${conn.from} → ${conn.to})`);
+      }
+    }
+  });
+
+  if (problems.length > 0) {
+    console.error('\n❌❌❌ BROKEN CONNECTIONS — the web will not render ❌❌❌');
+    problems.forEach((p) => console.error(p));
+    console.error(`\n   ${problems.length} bad reference(s). Fix ${CONNECTIONS_FILE} to point at real node IDs:`);
+    console.error(`   Known node IDs: ${[...known].sort().join(', ')}\n`);
+    process.exit(1);
+  }
+
+  console.log(`   ✓ connections.json: ${connections.length} connection(s), all references valid`);
+}
 
 async function generateManifest() {
   console.log('📦 Generating nodes manifest...');
@@ -45,11 +90,22 @@ async function generateManifest() {
           continue;
         }
 
-        // ALWAYS randomize position (override existing values)
-        node.x = Math.floor(Math.random() * 80) + 10; // 10-90 range
-        node.y = Math.floor(Math.random() * 60) + 15; // 15-75 range
+        // Drafts are excluded everywhere (landing, nav overlay, prerender)
+        // until their real content is ready.
+        if (node.draft === true) {
+          console.log(`   ✏️  ${file}: Draft, excluded from manifest`);
+          continue;
+        }
 
-        console.log(`   🎲 ${file}: Randomized position (${node.x}, ${node.y})`);
+        // Preserve authored positions for a stable, thread-balanced layout.
+        // Only randomize when a node ships without coordinates.
+        if (typeof node.x !== 'number' || typeof node.y !== 'number') {
+          node.x = Math.floor(Math.random() * 80) + 10; // 10-90 range
+          node.y = Math.floor(Math.random() * 60) + 15; // 15-75 range
+          console.log(`   🎲 ${file}: No position authored, randomized (${node.x}, ${node.y})`);
+        } else {
+          console.log(`   📍 ${file}: Position (${node.x}, ${node.y})`);
+        }
 
         // Ensure visible_on_landing defaults to true
         if (typeof node.visible_on_landing !== 'boolean') {
@@ -76,6 +132,9 @@ async function generateManifest() {
 
     console.log(`✅ Generated manifest with ${nodes.length} node(s)`);
     console.log(`   Output: ${NODES_FILE}`);
+
+    // Validate connections against the nodes that will actually render.
+    await validateConnections(nodes.map((n) => n.id));
 
   } catch (error) {
     console.error('❌ Failed to generate manifest:', error.message);

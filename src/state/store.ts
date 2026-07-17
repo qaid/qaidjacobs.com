@@ -1,4 +1,4 @@
-import type { Node, NodePx, Thread, Phrase, ThreadPalettes } from '../types';
+import type { Node, NodePx, Thread, Phrase, ThreadPalettes, ThreadType } from '../types';
 
 // Constants (not part of reactive state)
 export const DOT_SIZE = 14;
@@ -8,6 +8,14 @@ export const THREAD_PALETTES: ThreadPalettes = {
   music: ['#ff7a9e', '#ff9cc0', '#ffd3e1'],
   movement: ['#4fd1c5', '#7de8dd', '#b1fff4'],
   questions: ['#f6c56c', '#ffd28c', '#ffe7b8'],
+};
+
+// Single vibrant hue per thread — used for thread lines and blends.
+// Threads carry the color (nodes stay muted).
+export const THREAD_COLORS: Record<ThreadType, string> = {
+  music: '#ff7a9e',
+  movement: '#4fd1c5',
+  questions: '#f6c56c',
 };
 
 // State shape

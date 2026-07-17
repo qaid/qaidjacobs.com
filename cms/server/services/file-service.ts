@@ -5,6 +5,7 @@
 
 import { join, resolve, basename } from 'path';
 import { existsSync } from 'fs';
+import { rename, unlink } from 'fs/promises';
 import type { Node, CuriosityData, DurationalData, Phrase, Thread } from '../types';
 import type { BackupInfo } from '../types';
 
@@ -60,21 +61,17 @@ export async function createBackup(filePath: string): Promise<BackupInfo> {
  * Atomic write - write to temp file then rename
  */
 async function atomicWrite(filePath: string, content: string): Promise<void> {
-  const tempPath = `${filePath}.tmp`;
-  await Bun.write(tempPath, content);
-
-  // Rename is atomic on most filesystems
-  await Bun.write(filePath, content);
-
-  // Clean up temp file
+  const tempPath = `${filePath}.${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`;
   try {
-    await Bun.write(tempPath, ''); // Overwrite
-    const tempFile = Bun.file(tempPath);
-    if (await tempFile.exists()) {
-      // Note: Bun doesn't have fs.unlink directly, we'll use Bun.file
+    await Bun.write(tempPath, content);
+    await rename(tempPath, filePath);
+  } catch (error) {
+    try {
+      await unlink(tempPath);
+    } catch {
+      // Best-effort cleanup; preserve the original write error.
     }
-  } catch (e) {
-    // Temp file cleanup failed, not critical
+    throw error;
   }
 }
 

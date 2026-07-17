@@ -37,8 +37,11 @@
   display: none;
 }
 
-/* Main content wrapper */
+/* Main content wrapper.
+   --durational-intensity (0..1) tracks the saturation curve over playback:
+   lowest at start, peak at middle, lowest at end. */
 .durational-content {
+  --durational-intensity: 0.25;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -48,23 +51,72 @@
   min-height: 400px;
 }
 
-/* Particle background */
+/* Durational warmth: an ambient wash of the accent hue behind the player,
+   bled to the card's side/bottom edges. Its strength rises and falls with
+   playback via --durational-intensity, so the "trendy brunch" glow is
+   perceptibly warmer at mid-track peak than at rest — subtle, atmospheric,
+   never orange.
+
+   Geometry note: the wash is clipped to the .durational-content region (which
+   begins BELOW the header row + title) and its top radial is anchored well
+   inside that region with a soft fade, so it never paints a hard edge across
+   the title. Negative side/bottom insets bleed it to the card edges; the TOP
+   inset is 0 so the wash starts at the content top, not up in the title. */
+.durational-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--space-6));
+  right: calc(-1 * var(--space-6));
+  bottom: calc(-1 * var(--space-6));
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      140% 80% at 50% 12%,
+      rgba(196, 149, 106, calc(0.14 + 0.28 * var(--durational-intensity))),
+      transparent 72%
+    ),
+    radial-gradient(
+      140% 80% at 50% 100%,
+      rgba(196, 149, 106, calc(0.10 + 0.22 * var(--durational-intensity))),
+      transparent 70%
+    );
+  transition: background 700ms ease;
+}
+
+/* Particle background — opacity + saturation rise and fall with intensity.
+   Floor is lifted so particles stay perceptible over the warm card even at
+   the resting (low-intensity) state. */
 .durational-particles {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  opacity: 0.8;
-  z-index: 0;
+  opacity: calc(0.6 + 0.4 * var(--durational-intensity));
+  filter: saturate(calc(0.7 + 0.9 * var(--durational-intensity)));
+  transition: opacity 600ms ease, filter 600ms ease;
+  z-index: var(--z-web);
 }
 
 .durational-particle {
   position: absolute;
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--durational-particle);
+  box-shadow: 0 0 4px var(--durational-particle);
   will-change: transform;
+}
+
+/* Accent element (player frame glow) tracks intensity too */
+.durational-player {
+  box-shadow:
+    var(--shadow-lg),
+    0 0 calc(8px + 40px * var(--durational-intensity, 0.25))
+      rgba(196, 149, 106, calc(0.12 + 0.4 * var(--durational-intensity, 0.25)));
+  transition: box-shadow 600ms ease;
 }
 
 /* Media player */
@@ -126,5 +178,5 @@
 /* Scroll indicator for durational - same approach as essay */
 .container-overlay.is-durational.has-scroll .essay-container-wrapper .scroll-indicator {
   opacity: 1;
-  animation: bounce 2s ease-in-out infinite;
+  animation: scroll-hint-drift 2s ease-in-out infinite;
 }
